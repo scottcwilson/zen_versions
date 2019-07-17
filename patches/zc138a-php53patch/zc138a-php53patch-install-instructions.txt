@@ -1,0 +1,45 @@
+PHP 5.3 patch for Zen Cart v1.3.8 / v1.3.8a
+===========================================
+
+This patch is ONLY needed if you are attempting to run Zen Cart v1.3.8 on a server which is using PHP 5.3
+
+THIS PATCH IS **NOT** COMPATIBLE WITH PRIOR VERSIONS OF ZEN CART.
+THIS ZIP IS ONLY SUITABLE FOR v1.3.8 / v1.3.8a sites.
+
+INSTALLATION INSTRUCTIONS:
+==========================
+1. Unzip the zc138a-php53patch.zip file, using the option which expands included subdirectories. It's important that you know which subdirectory/folder each file belongs in, as indicated by its location after unzipping.
+
+2. Copy the files to your server.  NOTE THE FOLLOWING:
+
+a) If you have NOT customized any of these 11 files on your site already, simply copy the new versions of these files overtop of your existing ones.
+
+b) If you HAVE customized them, either by manual editing or by installing any addons that have altered the files from their original state, you'll need to manually merge the new changes into the files yourself. WinMerge is a handy free tool for doing such merging. http://winmerge.sf.net
+
+
+11 FILES AFFECTED:
+==========================
+/admin/includes/application_top.php
+/admin/includes/classes/phplot.php
+/admin/includes/functions/general.php
+/admin/includes/functions/html_output.php
+/admin/includes/header.php
+/admin/includes/modules/orders_download.php
+/admin/orders.php
+/includes/application_top.php
+/includes/functions/functions_general.php
+/includes/functions/html_output.php
+/includes/modules/payment/paypal/paypal_functions.php
+/zc_install/includes/application_top.php
+/zc_install/includes/classes/installer.php
+
+NOTES:
+- You will note that there are many similar filenames, such as application_top.php and 
+  html_output.php.  TAKE CARE THAT YOU USE THE RIGHT VERSION OF THESE FILES!  
+  ie: the /admin/includes/application_top.php file IS DIFFERENT FROM 
+      the /includes/application_top.php file, which IS ALSO DIFFERENT 
+      from the /zc_install/includes/application_top.php file.
+
+- If you are patching a live site, you DO NOT need the zc_install file update on 
+  your live server.  That file is only needed if you are trying to do a new install 
+  on a server running PHP 5.3

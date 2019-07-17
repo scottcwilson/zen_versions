@@ -1,0 +1,2 @@
+// This folder and all the files in it can be deleted from your server.
+// /includes/classes/support/*.*

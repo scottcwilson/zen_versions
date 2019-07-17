@@ -1,0 +1,2 @@
+ONLY if the site has already had the big PHPMailer updates done
+and just needs to go from 5.2.19 to 5.2.21.
