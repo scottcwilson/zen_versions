@@ -44,3 +44,4 @@ logs/*.log
 pub/*.log
 cache/*
 bmz_cache/*
+sql/run
