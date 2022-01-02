@@ -1,0 +1,157 @@
+<!--
+// +----------------------------------------------------------------------+
+// |zen-cart Open Source E-commerce                                       |
+// +----------------------------------------------------------------------+
+// | Copyright (c) 2004 The zen-cart developers                           |
+// |                                                                      |
+// | http://www.zen-cart.com/index.php                                    |
+// |                                                                      |
+// | Portions may be Copyright (c) 2003 osCommerce                        |
+// +----------------------------------------------------------------------+
+// | This source file is subject to version 2.0 of the GPL license,       |
+// | that is bundled with this package in the file LICENSE, and is        |
+// | available through the world-wide-web at the following url:           |
+// | http://www.zen-cart.com/license/2_0.txt.                             |
+// | If you did not receive a copy of the zen-cart license and are unable |
+// | to obtain it through the world-wide-web, please send a note to       |
+// | license@zen-cart.com so we can mail you a copy immediately.          |
+// +----------------------------------------------------------------------+
+// $Id: WHATSNEW1.2.4d.html 1003 2005-02-11 20:34:51Z drbyte $
+//-->
+<html>
+<style type="text/css">
+<!--
+body, table{ font-family:Verdana, Arial, Helvetica, sans-serif; font-size:14px; }
+table.intro {border-color:C96E29; }
+td.intro{background-color:#EEEEEE ; border-color:5778ce; font-size:14px; }
+td.plainbox, div.callout {border: 1px dashed; border-color: C96E29; margin:5 40 5 40;}
+.heading {background-color:5778CE; font-weight:bold; font-size:14px;	width: 100%; }
+
+.title1 {color:C96E29; font-weight:bold; font-size:22px; }
+.title2 {color:C96E29; font-weight:bold; font-size:13px; }
+.small {font-size:10px ;}
+.error {color:FF0000; }
+.filename {font-family: mono, "Courier New", Courier ; font-size:14px; color: c96e29;}
+.pseudolink {text-decoration:underline; color:5778CE;}
+h1.intro { color: #ffffff; border:1px solid #aca893; background-color: #c96e29;  font-size: 22px;   padding: 4px;}
+h1 { color: #ffffff;    border:1px solid #aca893;   background-color: #5778ce;   font-size: 20px;   padding: 4px;}
+h2 { color: #c96e29; 	font-size: 18px;}
+h3 { color: #5778ce;	font-size: 16px; margin-bottom:0px;}
+h4 { color: #c96e29;	font-size: 14px;}
+
+
+-->
+</style>
+<title>What's New in Zen Cart(tm)</title><body>
+
+<table class="intro" cellspacing="4" cellpadding="6" border="3" width="748px" align="center">
+<tr><td class="intro">
+<center><h1 class="intro">Welcome to Zen Cart&trade; ...</h1></center>
+<br />
+The Zen Cart&trade; software is made available to you for use, additions, changes, modifications, etc. without charge, under the GNU General Public License.
+<br />
+<br />
+While we do not charge for this software, donations are greatly appreciated each time you download a new version, to help cover the expenses of maintenance, upgrades, updates, the free support forum and the continued development of this software for your online e-commerce store.
+<br />
+<br />
+Donations can be made at:
+<a href="http://www.zen-cart.com/modules/freecontent/index.php?id=6" target="_blank">The Zen Cart&trade; Team Page</a>
+<br /><br />
+We appreciate your support.<br />
+<em>The Zen Cart&trade; Team</em><br />
+<br />
+
+<center>
+<span class="small">
+Zen Cart&trade; is derived from: Copyright  2003 osCommerce<br />
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;<br />
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE<br />
+and is redistributable under the GNU General Public License<br /><br />
+</span>
+</center>
+</td></tr></table>
+
+<br />
+<table border="3" width="748px" align="center" cellpadding="6">
+  <tr>
+<td align="center"><img src="osi-certified-120x100.png" /><br />
+This software is OSI Certified Open Source Software.<br />
+OSI Certified is a certification mark of the Open Source Initiative.
+</td></tr></table>
+<br />
+
+<table border="3" width="748px" align="center" cellpadding="6">
+  <tr>
+<td>
+<h1>Whats New ... </h1>
+<strong>The following are a list of bug-fixes/enhancements for v1.2.4d</strong> <br />
+(Also please see the PayPal Documentation for more info)
+<br />
+<ul>
+<li>admin login manager mouseover was broken due to misspelled object name</li>
+<li>attributes controller, missing function parameter - fix affects many files</li>
+<li>backup directory, added index.php to stop unwanted browsing of directory</li>
+<li>categories browser, missing function parameter (zen_has_products_attributes)</li>
+<li>shopping cart class,  missing function parameter (zen_has_products_attributes)</li>
+<li>admin zen_has_products_attributes function replaced to allow for read_only attributes</li>
+<li>added some missing admin language defines</li>
+<li>bug causing sub-category delete to delete all categories fixed (note this was actually a php5 compatibility problem)</li>
+<li>fixed invoice layout problems</li>
+<li>updated languages to handle coupon descriptions properly</li>
+<li>fix bugs to media manager.</li>
+<li>fix bugs to media type admin.</li>
+<li>fix bugs to option names manager.</li>
+<li>fix layout/bug in admin reviews code.</li>
+<li>fix nnobo bug to in whos online.</li>
+<li>fix layout in email templates.</li>
+<li>remove pconnect setting from query factory.</li>
+<li>fix bugs in order class. order status and missing text in email notification</li>
+<li>fix bugs in cart class. mainly special price handling</li>
+<li>removed some redundant filename defines</li>
+<li>fix bugs in lookup functions related to attributes</li>
+<li>fix bugs in image output.</li>
+<li>updates to various language defines</li>
+<li>fix layout problems in 'also purchased' product module</li>
+<li>fix bugs in featured products module.</li>
+<li>fix bugs in meta tags module.</li>
+<li>fix bugs in new products module.</li>
+<li>fix bug in checkout payment address page.</li>
+<li>fix bug in gv redeem page.</li>
+<li>fix bug in product review info page.</li>
+<li>fix bug in authorize.net aim payment module.</li>
+<li>fix bug in sandbox address in paypal ipn payment module.</li>
+<li>fix bug table/usps/zone shipping modules.</li>
+<li>fix bug in manufacturers sidebox.</li>
+<li>fix hardcoded text in whos online sidebox.</li>
+<li>fix bug in 'special' products index page.</li>
+<li>add some new spiders to spiders.txt.</li>
+<li>add new categories tab module.</li>
+<li>updated version files.</li>
+<li>add new categories tab module.</li>
+<li>update demo sql files for invalid date fields.</li>
+<li>fix bug in installer - not setting admin configure.php permissions correctly.</li>
+<li>Removed postgres*.sql files due to weak support for postgres db engine in v1.2.x so far. </li>
+<li>Add AUD support to paypal IPN module</li>
+<li>fix bug in paypal ipn which was crashing if various fields contained apostrophes.  </li>
+</ul>
+<strong>Template changes</strong>
+<ul>
+<li>fix bug in account template.</li>
+<li>fix bug in account history template.</li>
+<li>fix bug in document product info template.</li>
+<li>fix bug in login template.</li>
+<li>fix bug in free shipping info template.</li>
+<li>fix bug in default product info template.</li>
+<li>fix bug in music product info template.</li>
+<li>fix bug in product reviews template.</li>
+<li>fix bug in product reviews info template.</li>
+<li>fix bug in product next/previous template.</li>
+<li>fix bug in product shopping cart template.</li>
+</ul>
+</td>
+</tr>
+</table>
+<br /><br />
+<br /><br />
+</body>
+</html>
