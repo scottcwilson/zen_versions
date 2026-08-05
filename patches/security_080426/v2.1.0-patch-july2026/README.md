@@ -2,7 +2,7 @@
 
 Base: exact `v2.1.0` tag, commit `a255caba270e3defee99ada0d89c3b5dce7daf58`.
 
-This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains the same 59 paths represented by the patch.
+This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains 59 paths.
 
 ## Included work
 
@@ -13,6 +13,8 @@ This bundle contains production and distribution files only. Test-suite files ar
 - PR #7837 is commit `c073d475a`.
 - The PayPal work includes context commits `a356336d5` and `3ca486905` before `de6096611`, followed by `aa7fdf572`.
 - `96101e205` is included because this bundle is for 2.1.0 or newer.
+
+- Post-packaging fix (2026-08-04): the parameter-pollution check in `includes/application_top.php` now inspects the client-supplied query string via `REQUEST_URI` rather than the post-rewrite `QUERY_STRING`. SEO-URL rewrite rulesets synthesize a duplicate `main_page` parameter, which the original check rejected as pollution, returning 406 on listing pages that use the sort dropdown (`products_all`, `specials`, `featured_products`, `products_new`) and on the alpha filter.
 
 ## Deliberate omissions and adaptations
 

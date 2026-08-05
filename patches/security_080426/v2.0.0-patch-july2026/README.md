@@ -2,7 +2,7 @@
 
 Base: exact `v2.0.0` tag, commit `7e9875b2ec20a124b7dc703ee32311fb6cb238a5`.
 
-This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains the same 52 paths represented by the patch.
+This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains 52 paths.
 
 ## Included work
 
@@ -11,6 +11,8 @@ This bundle contains production and distribution files only. Test-suite files ar
 - Commits `25e93e7b2`, `c7cad22c3`, `33c2d0dae`, `1832c05a3`, `c073d475a`, `a356336d5`, `3ca486905`, `de6096611`, `ceb3bdcd3`, `c0ec264ce`, `39aa17831`, `aa7fdf572`, `88dfddf01`, `b1fbbdfbc`, `2d5e0f917`, `652b9e39d`, `e02bdc28e`, `47536a1e6`, `d4f1c8692`, and `c5e8b1834`.
 - PR #7837 is commit `c073d475a`.
 - The PayPal work includes context commits `a356336d5` and `3ca486905` before `de6096611`, followed by `aa7fdf572`.
+
+- Post-packaging fix (2026-08-04): the parameter-pollution check in `includes/application_top.php` now inspects the client-supplied query string via `REQUEST_URI` rather than the post-rewrite `QUERY_STRING`. SEO-URL rewrite rulesets synthesize a duplicate `main_page` parameter, which the original check rejected as pollution, returning 406 on listing pages that use the sort dropdown (`products_all`, `specials`, `featured_products`, `products_new`) and on the alpha filter.
 
 ## Deliberate omissions and adaptations
 
@@ -25,7 +27,7 @@ This bundle contains production and distribution files only. Test-suite files ar
 
 ## Backport integration notes
 
-- The finished v2.0.1 backport patch applied cleanly to the exact v2.0.0 tag. The overlapping tag delta was audited and required no additional adaptation.
+- The finished v2.0.1 backport applied cleanly to the exact v2.0.0 tag. The overlapping tag delta was audited and required no additional adaptation.
 - This bundle does not include the unrelated changes made between the v2.0.0 and v2.0.1 tags. It is the requested backport set, not a partial v2.0.1 upgrade.
 - PR #7623 is combined with PR #7931's trusted-proxy handling. The Buy Now referer check runs only after configuration is loaded, so forwarded host data is considered only for a configured trusted proxy.
 - PR #7482's parameter-pollution check is tightened and narrowed for the backport. Repeated or array-shaped Zen Cart scalar keys are rejected after URL-decoding, leading-space normalization, and PHP-style dot/space normalization, while repeated unknown keys remain available to plugins. Decoded control bytes are rejected in parameter names because PHP truncates names at a NUL byte. Matching is intentionally case-insensitive, which is stricter than PHP's native key handling.
@@ -48,4 +50,4 @@ This bundle contains production and distribution files only. Test-suite files ar
 - PHP 8.0 syntax lint on all 52 changed PHP files.
 - Targeted trusted-proxy, forwarded-host, native/direct-request, forwarded-chain, routing-map, upload-containment, parameter-pollution normalization, encoded-control-key, plugin-array, and query-length smoke checks.
 - `git diff --check`, dash-style, PayPal escaping, rejected-hunk, and backport-annotation checks.
-- Patch applicability and exact-content checks against a fresh worktree at the exact `v2.0.0` tag.
+- Exact-content checks against a fresh worktree at the exact `v2.0.0` tag.

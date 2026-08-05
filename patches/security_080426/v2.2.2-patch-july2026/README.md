@@ -2,17 +2,19 @@
 
 Base: exact `v2.2.2` tag, commit `63cf0ec3324d49767d25a07d168cdecb829e4d2a`.
 
-This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains the same 59 paths represented by the patch.
+This bundle contains production and distribution files only. Test-suite files are intentionally excluded. The overlay ZIP contains 59 paths.
 
 ## Included work
 
 - PRs #7557, #7623, #7714, #7835, #7837, #7858, #7860, #7897, #7924, #7931, and #7932, plus remediation of the PR #7482 implementation already present in the tag.
 - PR #7932 is unmerged at packaging time, so its final reviewed head is pinned to `8ebf8758a8c04128d8bfccb37f42f8cd30fe7a7d`.
 - Commits `33c2d0dae`, `1832c05a3`, `96101e205`, `81916997f`, `c073d475a`, `a356336d5`, `3ca486905`, `de6096611`, `ceb3bdcd3`, `c0ec264ce`, `39aa17831`, `aa7fdf572`, `88dfddf01`, `b1fbbdfbc`, `2d5e0f917`, `652b9e39d`, `e02bdc28e`, `47536a1e6`, `d4f1c8692`, and `c5e8b1834`.
-- `25e93e7b2` and `c7cad22c3` are already ancestors of `v2.2.2`, so they are not duplicated in the patch.
+- `25e93e7b2` and `c7cad22c3` are already ancestors of `v2.2.2`, so they are not duplicated in this bundle.
 - PR #7835 is commit `81916997f`, and is intentionally treated as 2.2-specific.
 - PR #7837 is commit `c073d475a`.
 - The PayPal work includes context commits `a356336d5` and `3ca486905` before `de6096611`, followed by `aa7fdf572`.
+
+- Post-packaging fix (2026-08-04): the parameter-pollution check in `includes/application_top.php` now inspects the client-supplied query string via `REQUEST_URI` rather than the post-rewrite `QUERY_STRING`. SEO-URL rewrite rulesets synthesize a duplicate `main_page` parameter, which the original check rejected as pollution, returning 406 on listing pages that use the sort dropdown (`products_all`, `specials`, `featured_products`, `products_new`) and on the alpha filter.
 
 ## Backport integration notes
 
