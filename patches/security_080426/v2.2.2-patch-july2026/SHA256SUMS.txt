@@ -1,0 +1,3 @@
+f8e0e8ba84266ea821a812f90dee8d8da27db5773e9329a319de768c9fae53ec  README.md
+b919def475384c5d153e97be4b6d4b773bd89406ba33bbf4b71305b841d8ea1a  zencart-v2.2.2-backports.patch
+17719e0111b221ae2755bb002b76529c0a6c2afb6d1e437196801fcb69a2fbec  zencart-v2.2.2-backports-overlay.zip

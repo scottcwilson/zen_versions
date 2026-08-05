@@ -1,0 +1,3303 @@
+diff --git a/admin/banner_manager.php b/admin/banner_manager.php
+index 6ac52a310..e71d7f3f8 100644
+--- a/admin/banner_manager.php
++++ b/admin/banner_manager.php
+@@ -145,6 +145,7 @@
+           $banners_image = new upload('banners_image');
+           $banners_image->set_extensions(['jpg', 'jpeg', 'gif', 'png', 'webp', 'flv', 'webm', 'ogg']);
+           $banners_image->set_destination(DIR_FS_CATALOG_IMAGES . $banners_image_target);
++          $banners_image->setPermittedDestinationBase(DIR_FS_CATALOG_IMAGES);
+           if (!$banners_image->parse() || !$banners_image->save()) {
+             $messageStack->add(ERROR_BANNER_IMAGE_REQUIRED, 'error');
+             $banner_error = true;
+diff --git a/admin/coupon_admin.php b/admin/coupon_admin.php
+index 689a9214c..1ed3a4cc1 100644
+--- a/admin/coupon_admin.php
++++ b/admin/coupon_admin.php
+@@ -176,14 +176,14 @@
+ // base code - create duplicate codes from base code
+     $zc_discount_coupons_create = (int)$_POST['coupon_copy_to_count'];
+     if ($zc_discount_coupons_create < 1) {
+-      $messageStack->add_session(WARNING_COUPON_DUPLICATE . $_POST['coupon_copy_to_dup_name'] . ' - x' . $_POST['coupon_copy_to_count'], 'caution');
++      $messageStack->add_session(WARNING_COUPON_DUPLICATE . zen_output_string_protected($_POST['coupon_copy_to_dup_name']) . ' - x' . $_POST['coupon_copy_to_count'], 'caution');
+     } else {
+         $status = Coupon::make_duplicates((int)$_GET['cid'], $_POST['coupon_copy_to_dup_name'], $zc_discount_coupons_create);
+         if ($status === true) {
+-            $messageStack->add_session(SUCCESS_COUPON_DUPLICATE . $_POST['coupon_copy_to_dup_name'] . ' - x' . $_POST['coupon_copy_to_count'], 'success');
++            $messageStack->add_session(SUCCESS_COUPON_DUPLICATE . zen_output_string_protected($_POST['coupon_copy_to_dup_name']) . ' - x' . $_POST['coupon_copy_to_count'], 'success');
+         } else {
+           // cannot create code
+-          $messageStack->add_session(WARNING_COUPON_DUPLICATE_FAILED . $_POST['coupon_copy_to_dup_name'] . ' - x' . $_POST['coupon_copy_to_count'], 'caution');
++          $messageStack->add_session(WARNING_COUPON_DUPLICATE_FAILED . zen_output_string_protected($_POST['coupon_copy_to_dup_name']) . ' - x' . $_POST['coupon_copy_to_count'], 'caution');
+         }
+     }
+     zen_redirect(zen_href_link(FILENAME_COUPON_ADMIN, 'cid=' . $_GET['cid'] . (isset($_GET['status']) ? '&status=' . $_GET['status'] : '') . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '')));
+@@ -247,11 +247,11 @@
+     $query1 = $db->Execute($sql);
+     if ($query1->RecordCount() > 0 && $_POST['coupon_code'] && $_GET['oldaction'] != 'voucheredit') {
+       $update_errors = 1;
+-      $messageStack->add(ERROR_COUPON_EXISTS . ' - ' . $_POST['coupon_code'], 'error');
++      $messageStack->add(ERROR_COUPON_EXISTS . ' - ' . zen_output_string_protected($_POST['coupon_code']), 'error');
+     }
+     if ($update_errors == 0 && $query1->RecordCount() > 0 && $query1->fields['coupon_id'] != $_GET['cid']) {
+       $update_errors = 1;
+-      $messageStack->add(ERROR_COUPON_EXISTS . ' - ' . $_POST['coupon_code'], 'error');
++      $messageStack->add(ERROR_COUPON_EXISTS . ' - ' . zen_output_string_protected($_POST['coupon_code']), 'error');
+     }
+ 
+     if ($update_errors != 0) {
+diff --git a/admin/customers.php b/admin/customers.php
+index c85d28ad2..aacd17dd1 100644
+--- a/admin/customers.php
++++ b/admin/customers.php
+@@ -919,7 +919,7 @@ function check_form() {
+                 <div class="col-sm-9 col-md-6">
+ <?php
+         if ($processed === true) {
+-            echo $cInfo->customers_fax . zen_draw_hidden_field('customers_fax');
++            echo htmlspecialchars((string)$cInfo->customers_fax, ENT_COMPAT, CHARSET, true) . zen_draw_hidden_field('customers_fax');
+         } else {
+             echo zen_draw_input_field(
+                 'customers_fax',
+@@ -1665,8 +1665,8 @@ class="btn btn-default"><?php
+                                         $zc_address_book_count
+                                     ); ?>
+                                 </td>
+-                                <td class="dataTableContent"><?php echo $customer['customers_lastname']; ?></td>
+-                                <td class="dataTableContent"><?php echo $customer['customers_firstname']; ?></td>
++                                <td class="dataTableContent"><?php echo zen_output_string_protected($customer['customers_lastname']); ?></td>
++                                <td class="dataTableContent"><?php echo zen_output_string_protected($customer['customers_firstname']); ?></td>
+ <?php
+         if (ACCOUNT_COMPANY === 'true') {
+ ?>
+@@ -1926,10 +1926,10 @@ class="btn btn-default"><?php
+                     'text' =>
+                         '<h4>' .
+                             TABLE_HEADING_ID . ' ' . $cInfo->customers_id . ' ' .
+-                            $cInfo->customers_firstname . ' ' . $cInfo->customers_lastname .
++                            zen_output_string_protected($cInfo->customers_firstname) . ' ' . zen_output_string_protected($cInfo->customers_lastname) .
+                         '</h4>' .
+                         '<br>' .
+-                        $cInfo->customers_email_address
++                        zen_output_string_protected($cInfo->customers_email_address)
+                 ];
+ 
+                 $contents[] = [
+diff --git a/admin/featured.php b/admin/featured.php
+index ec1310eef..46add7afc 100644
+--- a/admin/featured.php
++++ b/admin/featured.php
+@@ -89,7 +89,7 @@
+       if (isset($_GET['go_back']) && $_GET['go_back'] === 'ON') {
+         zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_id . '&current_category_id=' . $_GET['current_category_id']));
+       } else {
+-        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] . '&' : '') . (isset($new_featured) ? 'fID=' . $new_featured->fields['featured_id'] : '')));
++        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) . '&' : '') . (isset($new_featured) ? 'fID=' . $new_featured->fields['featured_id'] : '')));
+       }
+       break;
+     case 'update':
+@@ -147,7 +147,7 @@
+                         featured_date_available = '" . zen_db_input($featured_date_available) . "'
+                     WHERE featured_id = " . (int)$featured_id);
+ 
+-        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'fID=' . (int)$featured_id));
++        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'fID=' . (int)$featured_id));
+         break;
+     case 'deleteconfirm':
+       $featured_id = (int)$_POST['fID'];
+@@ -155,7 +155,7 @@
+       $db->Execute("DELETE FROM " . TABLE_FEATURED . "
+                     WHERE featured_id = " . (int)$featured_id);
+ 
+-      zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] : '')));
++      zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) : '')));
+       break;
+     case 'pre_add_confirmation':
+       $skip_featured = false;
+@@ -185,7 +185,7 @@
+         }
+       }
+       if ($skip_featured === true) {
+-        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($check_featured->fields['featured_id']) ? 'fID=' . (int)$check_featured->fields['featured_id'] : '' . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''))));
++        zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($check_featured->fields['featured_id']) ? 'fID=' . (int)$check_featured->fields['featured_id'] : '' . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''))));
+       } else { // product id is valid
+         zen_redirect(zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . 'action=new' . '&preID=' . (int)$_POST['pre_add_products_id']));
+       }
+@@ -336,7 +336,7 @@
+           if (isset($_GET['go_back']) && $_GET['go_back'] === 'ON') { // 'go_back' set in Products Price Manager
+             $cancel_link = zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $_GET['add_products_id'] . '&current_category_id=' . $_GET['current_category_id']);
+           } else {
+-            $cancel_link = zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . (!empty($_GET['fID']) ? 'fID=' . $_GET['fID'] : ''));
++            $cancel_link = zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . (!empty($_GET['fID']) ? 'fID=' . $_GET['fID'] : ''));
+           }
+           ?>
+           <?php require DIR_WS_INCLUDES . 'javascript/dateChecker.php'; ?>
+@@ -349,7 +349,7 @@
+         <div class="row">
+           <div class="col-sm-8">
+             <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . 'action=new'); ?>" class="btn btn-primary" role="button"><?php echo TEXT_ADD_FEATURED_SELECT; ?></a>
+-            <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=pre_add'); ?>" class="btn btn-primary" role="button" title="<?php echo TEXT_INFO_PRE_ADD_INTRO; ?>"><?php echo TEXT_ADD_FEATURED_PID; ?></a>
++            <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=pre_add'); ?>" class="btn btn-primary" role="button" title="<?php echo TEXT_INFO_PRE_ADD_INTRO; ?>"><?php echo TEXT_ADD_FEATURED_PID; ?></a>
+           </div>
+           <div class="col-sm-4">
+           <?php require DIR_WS_MODULES . 'search_box.php'; ?>
+@@ -434,9 +434,9 @@
+ 
+                   if (isset($fInfo) && is_object($fInfo) && ((int)$featured['featured_id'] === (int)$fInfo->featured_id)) {
+                     ?>
+-                    <tr id="defaultSelected" class="dataTableRowSelected" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'fID=' . $fInfo->featured_id . '&action=edit'); ?>'">
++                    <tr id="defaultSelected" class="dataTableRowSelected" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'fID=' . $fInfo->featured_id . '&action=edit'); ?>'">
+                     <?php } else { ?>
+-                    <tr class="dataTableRow" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'fID=' . $featured['featured_id']); ?>'">
++                    <tr class="dataTableRow" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'fID=' . $featured['featured_id']); ?>'">
+                       <?php
+                     }
+ 
+@@ -466,7 +466,7 @@
+                           <?php } ?>
+                         </button>
+                       <?php } else { ?>
+-                        <?php echo zen_draw_form('setflag_products_' . $featured['products_id'], FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=setflag'); ?>
++                        <?php echo zen_draw_form('setflag_products_' . $featured['products_id'], FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=setflag'); ?>
+                         <?php if ($featured['status'] === '1') { ?>
+                           <button type="submit" class="btn btn-status">
+                             <i class="fa-solid fa-square fa-lg txt-status-on" title="<?php echo TEXT_FEATURED_ACTIVE; ?>"></i>
+@@ -484,10 +484,10 @@
+                     </td>
+                     <td class="dataTableContent text-right actions">
+                       <div class="btn-group">
+-                      <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=edit' . '&fID=' . $featured['featured_id']); ?>" class="btn btn-sm btn-default btn-edit" role="button">
++                      <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=edit' . '&fID=' . $featured['featured_id']); ?>" class="btn btn-sm btn-default btn-edit" role="button">
+                         <?php echo zen_icon('pencil', ICON_EDIT) ?>
+                       </a>
+-                      <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=delete' . '&fID=' . $featured['featured_id']); ?>" class="btn btn-sm btn-default btn-delete" role="button">
++                      <a href="<?php echo zen_href_link(FILENAME_FEATURED, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=delete' . '&fID=' . $featured['featured_id']); ?>" class="btn btn-sm btn-default btn-delete" role="button">
+                         <?php echo zen_icon('trash', ICON_DELETE) ?>
+                       </a>
+                       </div>
+@@ -516,20 +516,20 @@
+                 switch ($action) {
+                     case 'delete':
+                         $heading[] = ['text' => '<h4>' . TEXT_INFO_HEADING_DELETE_FEATURED . '</h4>'];
+-                        $contents = ['form' => zen_draw_form('featured', FILENAME_FEATURED, 'action=deleteconfirm' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . zen_draw_hidden_field('fID', $fInfo->featured_id)];
++                        $contents = ['form' => zen_draw_form('featured', FILENAME_FEATURED, 'action=deleteconfirm' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . zen_draw_hidden_field('fID', $fInfo->featured_id)];
+                         $contents[] = ['text' => TEXT_INFO_DELETE_INTRO];
+                         $contents[] = ['text' => '<b>' . $fInfo->products_model . ' - "' . zen_clean_html($fInfo->products_name) . '"</b>'];
+-                        $contents[] = ['align' => 'text-center', 'text' => '<br><button type="submit" class="btn btn-danger">' . IMAGE_DELETE . '</button> <a href="' . zen_href_link(FILENAME_FEATURED, 'fID=' . $fInfo->featured_id . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
++                        $contents[] = ['align' => 'text-center', 'text' => '<br><button type="submit" class="btn btn-danger">' . IMAGE_DELETE . '</button> <a href="' . zen_href_link(FILENAME_FEATURED, 'fID=' . $fInfo->featured_id . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
+                         break;
+ 
+                     case 'pre_add':
+                         $heading[] = ['text' => '<h4>' . TEXT_INFO_HEADING_PRE_ADD_FEATURED . '</h4>'];
+-                        $contents = ['form' => zen_draw_form('featured', FILENAME_FEATURED, 'action=pre_add_confirmation' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''), 'post', 'class="form-horizontal"')];
++                        $contents = ['form' => zen_draw_form('featured', FILENAME_FEATURED, 'action=pre_add_confirmation' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''), 'post', 'class="form-horizontal"')];
+                         $contents[] = ['text' => TEXT_INFO_PRE_ADD_INTRO];
+                         $result = $db->Execute("SELECT MAX(products_id) AS lastproductid FROM " . TABLE_PRODUCTS);
+                         $max_product_id = $result->fields['lastproductid'];
+                         $contents[] = ['text' => zen_draw_label(TEXT_PRE_ADD_PRODUCTS_ID, 'pre_add_products_id', 'class="control-label"') . zen_draw_input_field('pre_add_products_id', '', zen_set_field_length(TABLE_FEATURED, 'products_id') . ' class="form-control" id="pre_add_products_id" required max="' . $max_product_id . '"', '', 'number')];
+-                        $contents[] = ['align' => 'text-center', 'text' => '<button type="submit" class="btn btn-primary">' . IMAGE_CONFIRM . '</button> <a href="' . zen_href_link(FILENAME_FEATURED, (!empty($fInfo->featured_id) ? '&fID=' . $fInfo->featured_id : '') . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
++                        $contents[] = ['align' => 'text-center', 'text' => '<button type="submit" class="btn btn-primary">' . IMAGE_CONFIRM . '</button> <a href="' . zen_href_link(FILENAME_FEATURED, (!empty($fInfo->featured_id) ? '&fID=' . $fInfo->featured_id : '') . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
+                         break;
+ 
+                     default:
+@@ -543,8 +543,8 @@
+                             $contents[] = [
+                                 'align' => 'text-center',
+                                 'text' => '
+-                                    <a href="' . zen_href_link(FILENAME_FEATURED, '&fID=' . $fInfo->featured_id . '&action=edit' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-primary" role="button">' . IMAGE_EDIT . '</a>
+-                                    <a href="' . zen_href_link(FILENAME_FEATURED, '&fID=' . $fInfo->featured_id . '&action=delete' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-warning" role="button">' . TEXT_INFO_HEADING_DELETE_FEATURED . '</a>'
++                                    <a href="' . zen_href_link(FILENAME_FEATURED, '&fID=' . $fInfo->featured_id . '&action=edit' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-primary" role="button">' . IMAGE_EDIT . '</a>
++                                    <a href="' . zen_href_link(FILENAME_FEATURED, '&fID=' . $fInfo->featured_id . '&action=delete' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-warning" role="button">' . TEXT_INFO_HEADING_DELETE_FEATURED . '</a>'
+                             ];
+                             $contents[] = [
+                                 'align' => 'text-center',
+diff --git a/admin/gv_mail.php b/admin/gv_mail.php
+index 6e4507462..5154faf24 100644
+--- a/admin/gv_mail.php
++++ b/admin/gv_mail.php
+@@ -10,16 +10,17 @@
+ require DIR_WS_CLASSES . 'currencies.php';
+ $currencies = new currencies();
+ 
+-if (!empty($_GET['action']) && $_GET['action'] == 'set_editor') {
++if (!empty($_GET['action']) && $_GET['action'] === 'set_editor') {
+   // Reset will be done by init_html_editor.php. Now we simply redirect to refresh page properly.
+   $action = '';
+   zen_redirect(zen_href_link(FILENAME_GV_MAIL));
+ }
+ 
+-$_POST['amount'] = !empty($_POST['amount']) ? preg_replace('/[^0-9.%]/', '', $_POST['amount']) : 0;
++$cleanAmount = preg_replace('/[^0-9.]/', '', (string)($_POST['amount'] ?? 0));
++$_POST['amount'] = is_numeric($cleanAmount) ? zen_str_to_numeric($cleanAmount) : 0;
+ $_POST['amount'] = abs($_POST['amount']);
+ $action = isset($_GET['action']) ? zen_db_prepare_input($_GET['action']) : '';
+-if ($action != '') {
++if ($action !== '') {
+   switch ($action) {
+     case ('preview'):
+       $error = 0;
+@@ -176,7 +177,7 @@ function check_form(form_name) {
+       }
+     </script>
+     <?php
+-    if ($editor_handler != '') {
++    if ($editor_handler !== '') {
+       include $editor_handler;
+     }
+     ?>
+@@ -217,18 +218,18 @@ function check_form(form_name) {
+             </tr>
+             <tr>
+               <td class="text-right"><b><?php echo TEXT_AMOUNT; ?></b></td>
+-              <td><?php echo $currencies->format(nl2br(htmlspecialchars(stripslashes($_POST['amount']), ENT_COMPAT, CHARSET, true))) . ($_POST['amount'] <= 0 ? '&nbsp;<span class="alert">' . ERROR_NO_AMOUNT_ENTERED . '</span>' : ''); ?>
++              <td><?php echo $currencies->format((string)$_POST['amount']) . ($_POST['amount'] <= 0 ? '&nbsp;<span class="alert">' . ERROR_NO_AMOUNT_ENTERED . '</span>' : ''); ?>
+               </td>
+             </tr>
+             <?php if (EMAIL_USE_HTML == 'true') { ?>
+               <tr>
+                 <td class="text-right"><b><?php echo TEXT_HTML_MESSAGE; ?></b></td>
+-                <td><?php echo stripslashes($_POST['message_html']); ?></td>
++                <td><?php echo stripslashes($_POST['message_html'] ?? ''); ?></td>
+               </tr>
+             <?php } ?>
+             <tr>
+               <td class="text-right"><b><?php echo TEXT_MESSAGE; ?></b></td>
+-              <td class="tt"><?php echo nl2br(htmlspecialchars(stripslashes($_POST['message']), ENT_COMPAT, CHARSET, true)); ?></td>
++              <td class="tt"><?php echo nl2br(htmlspecialchars(stripslashes($_POST['message'] ?? ''), ENT_COMPAT, CHARSET, true), false); ?></td>
+             </tr>
+           </table>
+           <div class="form-group">
+@@ -239,8 +240,8 @@ function check_form(form_name) {
+           <?php
+           /* Re-Post all POST'ed variables */
+           foreach ($_POST as $key => $value) {
+-            if (!is_array($_POST[$key])) {
+-              echo zen_draw_hidden_field($key, htmlspecialchars(stripslashes($value), ENT_COMPAT, CHARSET, true));
++            if (!is_array($value)) {
++              echo zen_draw_hidden_field($key, htmlspecialchars(stripslashes((string)$value), ENT_COMPAT, CHARSET, true));
+             }
+           }
+           echo '</form>';
+diff --git a/admin/includes/application_top.php b/admin/includes/application_top.php
+index c06abe96d..c25b9422e 100644
+--- a/admin/includes/application_top.php
++++ b/admin/includes/application_top.php
+@@ -10,6 +10,20 @@
+     die('Sorry, this version of Zen Cart requires PHP 8.0.2 or greater. <a href="https://www.zen-cart.com/requirements" rel="noopener" target="_blank">Please refer to our website</a> for the PHP versions supported.');
+ }
+ 
++/**
++ * Capture the genuine TCP peer address before any other code runs.
++ *
++ * This must happen before application_bootstrap.php (which loads the init system) and before
++ * init_sessions.php later overwrites $_SERVER['REMOTE_ADDR'], so that trust decisions about
++ * forwarded headers always see the real proxy/peer address. Request is not autoloadable this early
++ * (the psr-4 autoloader is set up inside the bootstrap below), so the class and its trait are
++ * required explicitly here via __DIR__-relative paths into the storefront classes directory. Only
++ * the PHP-version guard above runs before this point, and it does not read $_SERVER['REMOTE_ADDR'].
++ */
++require_once __DIR__ . '/../../includes/classes/traits/Singleton.php';
++require_once __DIR__ . '/../../includes/classes/Request.php';
++\Zencart\Request\Request::captureOriginalRemoteAddr();
++
+ /**
+  * Bootstrap file contains former application_top code
+  *
+diff --git a/admin/includes/dist-configure.php b/admin/includes/dist-configure.php
+index 5bb437ac5..ea0b33d2e 100644
+--- a/admin/includes/dist-configure.php
++++ b/admin/includes/dist-configure.php
+@@ -77,6 +77,19 @@
+  */
+ define('SQL_CACHE_METHOD', 'none');
+ 
++/**
++ * Optional: List of trusted proxy IP addresses.
++ * Leave it as an empty string/array if you are not using a proxy.
++ *
++ * But if you are hosting behind a proxy such as Cloudflare, you must add the official IP addresses of the proxy here.
++ * For example, for Cloudflare, you can find the list of IP addresses here: https://www.cloudflare.com/ips/
++ *
++ * Entries may be individual IPs or CIDR ranges (e.g. '173.245.48.0/20'),
++ * both IPv4 and IPv6 are supported.
++ * Supports listing entries as an array or a comma-delimited string.
++ */
++define('TRUSTED_PROXIES', []);
++
+ /**
+  * Reserved for future use
+  */
+diff --git a/admin/includes/functions/admin_access.php b/admin/includes/functions/admin_access.php
+index 97bfbbef5..426283f33 100644
+--- a/admin/includes/functions/admin_access.php
++++ b/admin/includes/functions/admin_access.php
+@@ -533,6 +533,9 @@ function zen_reset_password($id, $password, $compare): array
+         $sql = $db->bindVars($sql, ':adminID:', $id, 'integer');
+         $sql = $db->bindVars($sql, ':newpwd:', $encryptedPassword, 'string');
+         $db->Execute($sql);
++        if (isset($_SESSION['admin_id']) && (int)$_SESSION['admin_id'] === $id) {
++            zen_session_recreate();
++        }
+         zen_record_admin_activity('Account password change saved.', 'warning');
+     }
+     return $errors;
+diff --git a/admin/includes/init_includes/init_file_db_names.php b/admin/includes/init_includes/init_file_db_names.php
+index 552c65c1a..4208bdbec 100644
+--- a/admin/includes/init_includes/init_file_db_names.php
++++ b/admin/includes/init_includes/init_file_db_names.php
+@@ -13,16 +13,7 @@
+  * Currently only used as a helper when generating protocol-matched URLs for forms, templates, etc.
+  * This is not used as a validation tool at all in Zen Cart core code.
+  */
+-$request_type = (((isset($_SERVER['HTTPS']) && (strtolower($_SERVER['HTTPS']) == 'on' || $_SERVER['HTTPS'] == '1'))) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_BY']) && strpos(strtoupper($_SERVER['HTTP_X_FORWARDED_BY']), 'SSL') !== false) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_HOST']) && (strpos(strtoupper($_SERVER['HTTP_X_FORWARDED_HOST']), 'SSL') !== false || strpos(strtolower($_SERVER['HTTP_X_FORWARDED_HOST']), str_replace('https://', '', HTTPS_SERVER)) !== false)) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_SERVER']) && strpos(strtolower($_SERVER['HTTP_X_FORWARDED_SERVER']), str_replace('https://', '', HTTPS_SERVER)) !== false) ||
+-                 (isset($_SERVER['SCRIPT_URI']) && strtolower(substr($_SERVER['SCRIPT_URI'], 0, 6)) == 'https:') ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && ($_SERVER['HTTP_X_FORWARDED_SSL'] == '1' || strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) == 'on')) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && (strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'ssl' || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https')) ||
+-                 (isset($_SERVER['HTTP_SSLSESSIONID']) && $_SERVER['HTTP_SSLSESSIONID'] != '') ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_PORT']) && $_SERVER['HTTP_X_FORWARDED_PORT'] == '443') ||
+-                 (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443')) ? 'SSL' : 'NONSSL';
++$request_type = \Zencart\Request\Request::isSecure() ? 'SSL' : 'NONSSL';
+ 
+ // set php_self in the local scope
+ //  if (!isset($PHP_SELF)) $PHP_SELF = $_SERVER['PHP_SELF'];
+diff --git a/admin/orders.php b/admin/orders.php
+index b6ec37652..ec99b06a4 100644
+--- a/admin/orders.php
++++ b/admin/orders.php
+@@ -105,6 +105,24 @@
+     case 'download':
+ 
+       $fileName = basename($_GET['filename']);
++      $requested_upload_id = (int)$fileName;
++      $file_belongs_to_order = false;
++      if ($requested_upload_id > 0) {
++          $ownership_check = $db->Execute(
++              "SELECT opa.orders_products_attributes_id
++                 FROM " . TABLE_ORDERS_PRODUCTS_ATTRIBUTES . " opa
++                 JOIN " . TABLE_ORDERS_PRODUCTS . " op ON opa.orders_products_id = op.orders_products_id
++                WHERE op.orders_id = " . (int)$oID . "
++                  AND opa.products_options_values LIKE '" . $requested_upload_id . ". %'",
++              1
++          );
++          $file_belongs_to_order = !$ownership_check->EOF;
++      }
++      if (!$file_belongs_to_order) {
++          $messageStack->add_session(TEXT_FILE_NOT_FOUND, 'error');
++          zen_redirect(zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(['download', 'action']) . 'action=edit'));
++      }
++
+       $file_extension = strtolower(substr(strrchr($fileName, '.'), 1));
+         switch ($file_extension) {
+             case 'ai':
+diff --git a/admin/specials.php b/admin/specials.php
+index 808a032f1..df4e4fb5b 100644
+--- a/admin/specials.php
++++ b/admin/specials.php
+@@ -117,7 +117,7 @@
+       if (isset($_GET['go_back']) && $_GET['go_back'] === 'ON') {
+         zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_id . '&current_category_id=' . $_GET['current_category_id']));
+       } else {
+-        zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] . '&' : '') . (isset($new_special) ? 'sID=' . $new_special->fields['specials_id'] : '')));
++        zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) . '&' : '') . (isset($new_special) ? 'sID=' . $new_special->fields['specials_id'] : '')));
+       }
+       break;
+     case 'update':
+@@ -195,7 +195,7 @@
+                                     WHERE specials_id = " . (int)$specials_id);
+       zen_update_products_price_sorter($update_price->fields['products_id']);
+ 
+-      zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'sID=' . (int)$specials_id));
++      zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'sID=' . (int)$specials_id));
+       break;
+     case 'deleteconfirm':
+       $specials_id = (int)$_POST['sID'];
+@@ -211,7 +211,7 @@
+ 
+       zen_update_products_price_sorter($update_price_id);
+ 
+-      zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '')));
++      zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '')));
+       break;
+     case 'pre_add_confirmation':
+       $skip_special = false;
+@@ -244,7 +244,7 @@
+         }
+       }
+       if ($skip_special === true) {
+-        zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($check_special->fields['specials_id']) ? 'sID=' . (int)$check_special->fields['specials_id'] . '&action=edit' : '' . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''))));
++        zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($check_special->fields['specials_id']) ? 'sID=' . (int)$check_special->fields['specials_id'] . '&action=edit' : '' . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''))));
+       } else { // product id is valid
+         zen_redirect(zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . 'action=new' . '&preID=' . (int)$_POST['pre_add_products_id']));
+       }
+@@ -424,7 +424,7 @@
+           if (isset($_GET['go_back']) && $_GET['go_back'] === 'ON') { // 'go_back' set in Products Price Manager
+             $cancel_link = zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $_GET['add_products_id'] . '&current_category_id=' . $_GET['current_category_id']);
+           } else {
+-            $cancel_link = zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . (!empty($_GET['sID']) ? 'sID=' . $_GET['sID'] : ''));
++            $cancel_link = zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (!empty($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . (!empty($_GET['sID']) ? 'sID=' . $_GET['sID'] : ''));
+           }
+           ?>
+           <div class="col-sm-12 text-right">
+@@ -445,7 +445,7 @@
+         <div class="row">
+           <div class="col-sm-6">
+             <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . 'action=new'); ?>" class="btn btn-primary" role="button"><?php echo TEXT_ADD_SPECIAL_SELECT; ?></a>
+-            <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=pre_add'); ?>" class="btn btn-primary" role="button" title="<?php echo TEXT_INFO_PRE_ADD_INTRO; ?>"><?php echo TEXT_ADD_SPECIAL_PID; ?></a>
++            <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=pre_add'); ?>" class="btn btn-primary" role="button" title="<?php echo TEXT_INFO_PRE_ADD_INTRO; ?>"><?php echo TEXT_ADD_SPECIAL_PID; ?></a>
+           </div>
+           <div class="col-sm-offset-2 col-sm-4">
+           <?php require DIR_WS_MODULES . 'search_box.php'; ?>
+@@ -530,9 +530,9 @@
+ 
+                   if (isset($sInfo) && is_object($sInfo) && ((int)$special['specials_id'] === (int)$sInfo->specials_id)) {
+                     ?>
+-                    <tr id="defaultSelected" class="dataTableRowSelected" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'sID=' . $sInfo->specials_id . '&action=edit'); ?>'">
++                    <tr id="defaultSelected" class="dataTableRowSelected" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'sID=' . $sInfo->specials_id . '&action=edit'); ?>'">
+                     <?php } else { ?>
+-                    <tr class="dataTableRow" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'sID=' . $special['specials_id']); ?>'">
++                    <tr class="dataTableRow" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'sID=' . $special['specials_id']); ?>'">
+                       <?php
+                     }
+ 
+@@ -562,7 +562,7 @@
+                           <?php } ?>
+                         </button>
+                       <?php } else { ?>
+-                        <?php echo zen_draw_form('setflag_products_' . $special['products_id'], FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=setflag'); ?>
++                        <?php echo zen_draw_form('setflag_products_' . $special['products_id'], FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=setflag'); ?>
+                         <?php if ($special['status'] === '1') { ?>
+                           <button type="submit" class="btn btn-status">
+                             <?php echo zen_icon('enabled', TEXT_SPECIAL_ACTIVE, 'lg'); ?>
+@@ -580,10 +580,10 @@
+                     </td>
+                     <td class="dataTableContent text-right actions">
+                       <div class="btn-group">
+-                      <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=edit' . '&sID=' . $special['specials_id']); ?>" data-toggle="tooltip" title="<?php echo ICON_EDIT ?>" class="btn btn-sm btn-default btn-edit" role="button">
++                      <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=edit' . '&sID=' . $special['specials_id']); ?>" data-toggle="tooltip" title="<?php echo ICON_EDIT ?>" class="btn btn-sm btn-default btn-edit" role="button">
+                         <?php echo zen_icon('pencil', hidden: true) ?>
+                       </a>
+-                      <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . $_GET['search'] . '&' : '') . 'action=delete' . '&sID=' . $special['specials_id']); ?>" data-toggle="tooltip" title="<?php echo ICON_DELETE ?>" class="btn btn-sm btn-default btn-delete" role="button">
++                      <a href="<?php echo zen_href_link(FILENAME_SPECIALS, ($currentPage != 0 ? 'page=' . $currentPage . '&' : '') . (isset($_GET['search']) ? 'search=' . urlencode($_GET['search']) . '&' : '') . 'action=delete' . '&sID=' . $special['specials_id']); ?>" data-toggle="tooltip" title="<?php echo ICON_DELETE ?>" class="btn btn-sm btn-default btn-delete" role="button">
+                         <?php echo zen_icon('trash', hidden: true) ?>
+                       </a>
+                       </div>
+@@ -612,20 +612,20 @@
+                 switch ($action) {
+                     case 'delete':
+                         $heading[] = ['text' => '<h4>' . TEXT_INFO_HEADING_DELETE_SPECIALS . '</h4>'];
+-                        $contents = ['form' => zen_draw_form('specials', FILENAME_SPECIALS, 'action=deleteconfirm' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . zen_draw_hidden_field('sID', $sInfo->specials_id)];
++                        $contents = ['form' => zen_draw_form('specials', FILENAME_SPECIALS, 'action=deleteconfirm' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . zen_draw_hidden_field('sID', $sInfo->specials_id)];
+                         $contents[] = ['text' => TEXT_INFO_DELETE_INTRO];
+                         $contents[] = ['text' => '<b>' . $sInfo->products_model . ' - "' . zen_clean_html($sInfo->products_name) . '"</b>'];
+-                        $contents[] = ['align' => 'text-center', 'text' => '<br><button type="submit" class="btn btn-danger">' . IMAGE_DELETE . '</button> <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
++                        $contents[] = ['align' => 'text-center', 'text' => '<br><button type="submit" class="btn btn-danger">' . IMAGE_DELETE . '</button> <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
+                         break;
+ 
+                     case 'pre_add':
+                         $heading[] = ['text' => '<h4>' . TEXT_INFO_HEADING_PRE_ADD_SPECIALS . '</h4>'];
+-                        $contents = ['form' => zen_draw_form('specials', FILENAME_SPECIALS, 'action=pre_add_confirmation' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''), 'post', 'class="form-horizontal"')];
++                        $contents = ['form' => zen_draw_form('specials', FILENAME_SPECIALS, 'action=pre_add_confirmation' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''), 'post', 'class="form-horizontal"')];
+                         $contents[] = ['text' => TEXT_INFO_PRE_ADD_INTRO];
+                         $result = $db->Execute("SELECT MAX(products_id) AS lastproductid FROM " . TABLE_PRODUCTS);
+                         $max_product_id = $result->fields['lastproductid'];
+                         $contents[] = ['text' => zen_draw_label(TEXT_PRE_ADD_PRODUCTS_ID, 'pre_add_products_id', 'class="control-label"') . zen_draw_input_field('pre_add_products_id', '', zen_set_field_length(TABLE_SPECIALS, 'products_id') . ' class="form-control" id="pre_add_products_id" required max="' . $max_product_id . '"', '', 'number')];
+-                        $contents[] = ['align' => 'text-center', 'text' => '<button type="submit" class="btn btn-primary">' . IMAGE_CONFIRM . '</button> <a href="' . zen_href_link(FILENAME_SPECIALS, (!empty($sInfo->specials_id) ? '&sID=' . $sInfo->specials_id : '') . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
++                        $contents[] = ['align' => 'text-center', 'text' => '<button type="submit" class="btn btn-primary">' . IMAGE_CONFIRM . '</button> <a href="' . zen_href_link(FILENAME_SPECIALS, (!empty($sInfo->specials_id) ? '&sID=' . $sInfo->specials_id : '') . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-default" role="button">' . IMAGE_CANCEL . '</a>'];
+                         break;
+ 
+                     default:
+@@ -639,8 +639,8 @@
+                             $contents[] = [
+                                 'align' => 'text-center',
+                                 'text' => '
+-                                <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . '&action=edit' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-primary" role="button">' . IMAGE_EDIT . '</a>
+-                                <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . '&action=delete' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : '')) . '" class="btn btn-warning" role="button">' . TEXT_INFO_HEADING_DELETE_SPECIALS . '</a>'
++                                <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . '&action=edit' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-primary" role="button">' . IMAGE_EDIT . '</a>
++                                <a href="' . zen_href_link(FILENAME_SPECIALS, 'sID=' . $sInfo->specials_id . '&action=delete' . ($currentPage != 0 ? '&page=' . $currentPage : '') . (isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '')) . '" class="btn btn-warning" role="button">' . TEXT_INFO_HEADING_DELETE_SPECIALS . '</a>'
+                             ];
+                             $contents[] = [
+                                 'align' => 'text-center',
+diff --git a/admin/sqlpatch.php b/admin/sqlpatch.php
+index 33f145c10..bc4840601 100644
+--- a/admin/sqlpatch.php
++++ b/admin/sqlpatch.php
+@@ -752,7 +752,7 @@ function zen_create_exceptions_table() {
+         }
+         if (!empty($query_results['errors'])) {
+           foreach ($query_results['errors'] as $value) {
+-            $messageStack->add('ERROR: ' . $value, 'error');
++            $messageStack->add('ERROR: ' . zen_output_string_protected($value), 'error');
+           }
+         }
+         if ($query_results['ignored'] != 0) {
+@@ -784,7 +784,7 @@ function zen_create_exceptions_table() {
+         }
+         if (!empty($query_results['errors'])) {
+           foreach ($query_results['errors'] as $value) {
+-            $messageStack->add(ICON_ERROR . ': ' . $value, 'error');
++            $messageStack->add(ICON_ERROR . ': ' . zen_output_string_protected($value), 'error');
+           }
+         }
+         if ($query_results['ignored'] != 0) {
+@@ -793,7 +793,7 @@ function zen_create_exceptions_table() {
+         if (!empty($query_results['output'])) {
+           foreach ($query_results['output'] as $value) {
+             if (!empty($value)) {
+-              $messageStack->add('ERROR: ' . $value, 'error');
++              $messageStack->add('ERROR: ' . zen_output_string_protected($value), 'error');
+             }
+           }
+         }
+diff --git a/includes/application_top.php b/includes/application_top.php
+index bc2783d8b..fdf608024 100644
+--- a/includes/application_top.php
++++ b/includes/application_top.php
+@@ -38,21 +38,127 @@
+ }
+ $paramsToCheck = array($zenSessionId, 'main_page', 'cPath', 'products_id', 'language', 'currency', 'action', 'manufacturers_id', 'pID', 'pid', 'reviews_id', 'filter_id', 'sort', 'number_of_uploads', 'notify', 'page_holder', 'chapter', 'alpha_filter_id', 'typefilter', 'disp_order', 'id', 'key', 'music_genre_id', 'record_company_id', 'set_session_login', 'faq_item', 'edit', 'delete', 'search_in_description', 'dfrom', 'pfrom', 'dto', 'pto', 'inc_subcat', 'payment_error', 'order', 'gv_no', 'pos', 'addr', 'error', 'count', 'error_message', 'info_message', 'cID', 'page', 'credit_class_error_code');
+ if (!$contaminated) {
+-  foreach($paramsToCheck as $key) {
+-    if (isset($_GET[$key]) && !is_array($_GET[$key])) {
+-      if (substr($_GET[$key], 0, 4) == 'http' || strstr($_GET[$key], '//')) {
++    foreach ($paramsToCheck as $key) {
++        if (!isset($_GET[$key])) {
++            continue;
++        }
++        if (is_array($_GET[$key])) {
++            $contaminated = true;
++            break;
++        }
++        if (stripos((string) $_GET[$key], 'http') === 0 || strpos((string) $_GET[$key], '//') !== false) {
++            $contaminated = true;
++            break;
++        }
++        $len = in_array($key, [$zenSessionId, 'error_message', 'payment_error'], true) ? 255 : 43;
++        if (strlen((string) $_GET[$key]) > $len) {
++            $contaminated = true;
++            break;
++        }
++    }
++}
++
++/**
++ * Reject excessive query strings and raw control/non-ASCII bytes. Payment and
++ * checkout returns receive a larger allowance because off-site providers can
++ * legitimately return longer query strings.
++ */
++if (!$contaminated && !empty($_SERVER['QUERY_STRING'])) {
++    $longQueryPages = ['checkout_process', 'checkout_payment', 'checkout', 'checkout_one', 'checkout_one_confirmation'];
++    $maxQueryLength = in_array($_GET['main_page'] ?? '', $longQueryPages, true) ? 2048 : 256;
++
++    if (strlen($_SERVER['QUERY_STRING']) > $maxQueryLength
++        || preg_match('/[\x00-\x1F\x7F-\xFF]/', $_SERVER['QUERY_STRING'])
++    ) {
+         $contaminated = true;
+-        break;
+-      }
+-      $len = (in_array($key, array($zenSessionId, 'error_message', 'payment_error'))) ? 255 : 43;
+-      if (isset($_GET[$key]) && strlen($_GET[$key]) > $len) {
++    }
++}
++
++/**
++ * Reject HTTP parameter pollution for keys Zen Cart expects to be scalar.
++ * PHP silently replaces earlier scalar values and normalizes encoded dots and
++ * spaces in parameter names, so inspect and normalize the raw query keys before
++ * the database and session systems are initialized. Matching is intentionally
++ * case-insensitive. Unknown keys are left alone so plugins can intentionally use
++ * repeated GET arrays such as filter[]=value.
++ */
++if (!$contaminated && !empty($_SERVER['QUERY_STRING'])) {
++    $protectedScalarKeys = [];
++    foreach ($paramsToCheck as $protectedKey) {
++        $protectedScalarKeys[strtolower($protectedKey)] = true;
++    }
++
++    $seenProtectedKeys = [];
++    $querySeparators = (string) ini_get('arg_separator.input');
++    $queryPairs = preg_split(
++        '/[' . preg_quote($querySeparators !== '' ? $querySeparators : '&', '/') . ']/',
++        $_SERVER['QUERY_STRING']
++    );
++
++    if ($queryPairs === false) {
+         $contaminated = true;
+-        break;
+-      }
++    } else {
++        foreach ($queryPairs as $pair) {
++            $rawKey = explode('=', $pair, 2)[0];
++            if ($rawKey === '') {
++                continue;
++            }
++
++            $decodedKey = ltrim(urldecode($rawKey), ' ');
++
++            // PHP truncates parameter names at decoded NUL bytes; no control byte is valid key content.
++            if (preg_match('/[\x00-\x1F\x7F]/', $decodedKey)) {
++                $contaminated = true;
++                break;
++            }
++
++            $normalizedKey = strtolower(str_replace(['.', ' '], '_', $decodedKey));
++            $bracketPosition = strpos($normalizedKey, '[');
++            $baseKey = $bracketPosition === false ? $normalizedKey : substr($normalizedKey, 0, $bracketPosition);
++
++            if (!isset($protectedScalarKeys[$baseKey])) {
++                continue;
++            }
++
++            if ($bracketPosition !== false || isset($seenProtectedKeys[$baseKey])) {
++                $contaminated = true;
++                break;
++            }
++
++            $seenProtectedKeys[$baseKey] = true;
++        }
+     }
+-  }
+ }
+-unset($paramsToCheck, $paramsToAvoid, $key);
++
++unset(
++    $paramsToCheck,
++    $paramsToAvoid,
++    $key,
++    $longQueryPages,
++    $maxQueryLength,
++    $protectedScalarKeys,
++    $protectedKey,
++    $seenProtectedKeys,
++    $querySeparators,
++    $queryPairs,
++    $pair,
++    $rawKey,
++    $decodedKey,
++    $normalizedKey,
++    $bracketPosition,
++    $baseKey
++);
++
++/**
++ * reject catalog-filter params (manufacturers_id, sort, etc.) when supplied for
++ * a page confirmed to never legitimately read them, such as checkout pages with
++ * spoofed query strings. cPath and products_id are deliberately NOT covered here.
++ */
++if (!$contaminated) {
++    require_once __DIR__ . '/routing_map.php';
++    $contaminated = zen_request_has_disallowed_catalog_param($_GET);
++}
++
+ if ($contaminated)
+ {
+   header('HTTP/1.1 406 Not Acceptable');
+@@ -86,6 +192,20 @@
+     require 'includes/templates/template_default/templates/tpl_zc_phpupgrade_default.php';
+     exit(0);
+ }
++
++/**
++ * Capture the genuine TCP peer address before any other bootstrap code runs.
++ *
++ * This must happen before init_sessions.php overwrites $_SERVER['REMOTE_ADDR'] with the resolved
++ * client IP, so that trust decisions about forwarded headers (zen_get_ip_address()) always see the
++ * real proxy/peer address. Request is not autoloadable this early (the psr-4 autoloader is
++ * registered further down), so the class and its trait are required explicitly here via
++ * __DIR__-relative paths. Nothing above this point reads $_SERVER['REMOTE_ADDR'].
++ */
++require_once __DIR__ . '/classes/traits/Singleton.php';
++require_once __DIR__ . '/classes/Request.php';
++\Zencart\Request\Request::captureOriginalRemoteAddr();
++
+ /**
+  * Set the local configuration parameters - mainly for developers
+  */
+@@ -150,6 +270,22 @@
+   exit;
+ }
+ 
++/*
++ * Reject automated or cross-site Buy Now requests before initializing the application.
++ * Forwarded hosts are considered only when the connection came from a configured trusted proxy.
++ */
++if (isset($_GET['action']) && $_GET['action'] === 'buy_now') {
++    $isCrawlerUserAgent = empty($_SERVER['HTTP_USER_AGENT'])
++        || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|bingpreview/i', (string) $_SERVER['HTTP_USER_AGENT']);
++    $hasInternalReferer = \Zencart\Request\Request::isInternalReferer((string) ($_SERVER['HTTP_REFERER'] ?? ''));
++
++    if ($isCrawlerUserAgent || !$hasInternalReferer) {
++        header('HTTP/1.1 406 Not Acceptable');
++        exit;
++    }
++    unset($isCrawlerUserAgent, $hasInternalReferer);
++}
++
+ /**
+  * check for and load system defined path constants
+  */
+diff --git a/includes/classes/Request.php b/includes/classes/Request.php
+index 83d4593f4..d022950d7 100644
+--- a/includes/classes/Request.php
++++ b/includes/classes/Request.php
+@@ -15,6 +15,27 @@ class Request
+ 
+     protected $paramBag;
+ 
++    /**
++     * The genuine TCP peer address ($_SERVER['REMOTE_ADDR']) as it was at the very start of the
++     * request, captured once before any init code (notably init_sessions.php, which overwrites
++     * $_SERVER['REMOTE_ADDR'] with the result of zen_get_ip_address()) can mutate it.
++     *
++     * Trust decisions about client-suppliable forwarded headers (zen_get_ip_address())
++     * must be made against this immutable original peer address, never against the live
++     * $_SERVER['REMOTE_ADDR'] which may already have been resolved or overwritten earlier in the request.
++     * A static property (rather than a define() constant) is used deliberately so
++     * it can be reset between PHPUnit test cases running in the same process.
++     */
++    private static $originalRemoteAddr = null;
++
++    /**
++     * Per-request cache of the parsed TRUSTED_PROXIES list. TRUSTED_PROXIES is a defined
++     * constant and cannot change during a request, so re-parsing it on every call would be
++     * repeated work for an unchanging result. Nullable so null-coalescing assignment can
++     * distinguish "not yet computed" from "computed to an empty list".
++     */
++    private static $trustedProxiesCache = null;
++
+     /**
+      * @return mixed|Request
+      */
+@@ -43,4 +64,291 @@ public function has($key)
+     {
+         return (isset($this->paramBag[$key]));
+     }
++
++    /**
++     * Determine whether the current request was made over HTTPS.
++     *
++     * Forwarded protocol headers are only authoritative when the genuine TCP peer is a
++     * configured trusted proxy. Native web-server HTTPS indicators remain authoritative
++     * for direct requests.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function isSecure(): bool
++    {
++        $nativelySecure = (isset($_SERVER['HTTPS']) && (strtolower((string) $_SERVER['HTTPS']) === 'on' || $_SERVER['HTTPS'] == '1'))
++            || (isset($_SERVER['SCRIPT_URI']) && stripos((string) $_SERVER['SCRIPT_URI'], 'https:') === 0)
++            || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443');
++        if ($nativelySecure) {
++            return true;
++        }
++
++        if (!self::isFromTrustedProxy()) {
++            return false;
++        }
++
++        $httpsServer = defined('HTTPS_SERVER') ? strtolower(str_replace('https://', '', (string) HTTPS_SERVER)) : '';
++        $forwardedHost = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? ''));
++        $forwardedServer = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_SERVER'] ?? ''));
++
++        return (isset($_SERVER['HTTP_X_FORWARDED_BY']) && str_contains(strtoupper((string) $_SERVER['HTTP_X_FORWARDED_BY']), 'SSL'))
++            || ($forwardedHost !== '' && (str_contains(strtoupper($forwardedHost), 'SSL') || ($httpsServer !== '' && str_contains($forwardedHost, $httpsServer))))
++            || ($forwardedServer !== '' && $httpsServer !== '' && str_contains($forwardedServer, $httpsServer))
++            || (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && ($_SERVER['HTTP_X_FORWARDED_SSL'] == '1' || strtolower((string) $_SERVER['HTTP_X_FORWARDED_SSL']) === 'on'))
++            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && in_array(strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']), ['ssl', 'https'], true))
++            || !empty($_SERVER['HTTP_SSLSESSIONID'])
++            || (isset($_SERVER['HTTP_X_FORWARDED_PORT']) && $_SERVER['HTTP_X_FORWARDED_PORT'] == '443');
++    }
++
++    /**
++     * Return the request host without a port.
++     *
++     * A forwarded host is used only when the genuine TCP peer is trusted. If a proxy chain
++     * supplies multiple hosts, the rightmost non-empty value is the one added by the proxy
++     * closest to the application.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function getRequestHost(): string
++    {
++        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
++        if (self::isFromTrustedProxy() && !empty($_SERVER['HTTP_X_FORWARDED_HOST'])) {
++            $forwardedHosts = array_values(array_filter(
++                array_map('trim', explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST'])),
++                static fn(string $forwardedHost): bool => $forwardedHost !== ''
++            ));
++            if ($forwardedHosts !== []) {
++                $host = $forwardedHosts[array_key_last($forwardedHosts)];
++            }
++        }
++        return self::normalizeHost($host);
++    }
++
++    /**
++     * Determine whether an absolute referer URL belongs to the current request host.
++     *
++     * Ports are deliberately ignored. This allows Buy Now links to work when HTTP_HOST
++     * includes a non-standard port while parse_url() returns only the referer hostname.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function isInternalReferer(string $referer): bool
++    {
++        if ($referer === '') {
++            return false;
++        }
++        $refererHost = parse_url($referer, PHP_URL_HOST);
++        if (!is_string($refererHost) || $refererHost === '') {
++            return false;
++        }
++        return self::normalizeHost($refererHost) === self::getRequestHost();
++    }
++
++    /**
++     * Normalize a hostname for comparison, including bracketed IPv6 addresses.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    private static function normalizeHost(string $host): string
++    {
++        $host = strtolower(trim($host));
++        if (preg_match('/^\[(.*)\](?::\d+)?$/D', $host, $matches)) {
++            return $matches[1];
++        }
++        return preg_replace('/:\d+$/D', '', $host) ?? '';
++    }
++
++    /**
++     * Return the genuine TCP peer address captured at the start of the request.
++     *
++     * Lazily captures on first read as a safety net in case captureOriginalRemoteAddr() was not
++     * already called during bootstrap. The first captured value remains stable for the request.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function getOriginalRemoteAddr(): string
++    {
++        self::captureOriginalRemoteAddr();
++        return self::$originalRemoteAddr ?? '';
++    }
++
++    /**
++     * Capture the genuine TCP peer address once, as early as possible in the request.
++     *
++     * Null-coalescing assignment makes repeated calls harmless and ensures that a later,
++     * possibly already-mutated $_SERVER['REMOTE_ADDR'] cannot replace the original value.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function captureOriginalRemoteAddr(): void
++    {
++        self::$originalRemoteAddr ??= ($_SERVER['REMOTE_ADDR'] ?? '');
++    }
++
++    /**
++     * Determine whether the genuine TCP peer is a configured trusted reverse proxy.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function isFromTrustedProxy(): bool
++    {
++        return self::isTrustedProxyAddress(self::getOriginalRemoteAddr());
++    }
++
++    /**
++     * Determine whether the given address matches a configured trusted reverse proxy.
++     *
++     * Each TRUSTED_PROXIES entry may be a single IP or a CIDR range such as
++     * 173.245.48.0/20. Both IPv4 and IPv6 are supported.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function isTrustedProxyAddress(string $address): bool
++    {
++        if ($address === '') {
++            return false;
++        }
++        $trustedProxies = self::getTrustedProxies();
++        if ($trustedProxies === []) {
++            return false;
++        }
++
++        // Compute the candidate's packed address once for all configured entries.
++        $addressBin = @inet_pton($address);
++        if ($addressBin === false) {
++            return false;
++        }
++        foreach ($trustedProxies as $proxyEntry) {
++            if (self::proxyEntryMatchesPeer($addressBin, $proxyEntry)) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    /**
++     * Return the parsed TRUSTED_PROXIES list, computed once per request.
++     *
++     * Accepts either an array or a comma-separated string, trims entries, and drops empty entries.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function getTrustedProxies(): array
++    {
++        self::$trustedProxiesCache ??= self::parseTrustedProxiesConfig();
++        return self::$trustedProxiesCache;
++    }
++
++    /**
++     * Parse the raw TRUSTED_PROXIES configuration constant into a normalized list.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    private static function parseTrustedProxiesConfig(): array
++    {
++        $trustedProxiesConfig = defined('TRUSTED_PROXIES') ? constant('TRUSTED_PROXIES') : '';
++        if (is_array($trustedProxiesConfig)) {
++            return array_values(array_filter(array_map(static fn($proxy): string => trim((string) $proxy), $trustedProxiesConfig)));
++        }
++        return array_values(array_filter(array_map('trim', explode(',', (string) $trustedProxiesConfig))));
++    }
++
++    /**
++     * Resolve the real client address from a forwarded-header chain such as X-Forwarded-For.
++     *
++     * A client can forge the leftmost entries before the request reaches a trusted proxy.
++     * Walk the chain from the right, skip entries that are themselves trusted proxies, and
++     * return the first address that is not trusted. If every entry is trusted, or the chain
++     * is empty after trimming, fall back to the captured original peer address.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function resolveClientFromForwardedChain(string $forwardedChain): string
++    {
++        $hops = array_reverse(array_values(array_filter(array_map('trim', explode(',', $forwardedChain)), static fn(string $hop): bool => $hop !== '')));
++        foreach ($hops as $hop) {
++            if (!self::isTrustedProxyAddress($hop)) {
++                return $hop;
++            }
++        }
++        return self::getOriginalRemoteAddr();
++    }
++
++    /**
++     * Match one TRUSTED_PROXIES entry, either an exact IP or CIDR range, against a packed address.
++     *
++     * Exact entries are compared in packed form so equivalent IPv6 text representations match.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    private static function proxyEntryMatchesPeer(string $peerBin, string $proxyEntry): bool
++    {
++        if (!str_contains($proxyEntry, '/')) {
++            $entryBin = @inet_pton($proxyEntry);
++            return $entryBin !== false && $entryBin === $peerBin;
++        }
++        return self::ipInCidrRange($peerBin, $proxyEntry);
++    }
++
++    /**
++     * Determine whether a packed IP address falls within an IPv4 or IPv6 CIDR range.
++     *
++     * Invalid input and address-family mismatches return false.
++     *
++     * @since ZC v2.3.0 (backported)
++     */
++    private static function ipInCidrRange(string $ipBin, string $cidr): bool
++    {
++        $parts = explode('/', $cidr, 2);
++        if (count($parts) !== 2 || !ctype_digit($parts[1])) {
++            return false;
++        }
++        [$subnet, $maskBits] = $parts;
++        $maskBits = (int) $maskBits;
++
++        $subnetBin = @inet_pton($subnet);
++        if ($subnetBin === false || strlen($ipBin) !== strlen($subnetBin)) {
++            return false;
++        }
++
++        $totalBits = strlen($ipBin) * 8;
++        if ($maskBits < 0 || $maskBits > $totalBits) {
++            return false;
++        }
++
++        $fullBytes = intdiv($maskBits, 8);
++        if ($fullBytes > 0 && substr($ipBin, 0, $fullBytes) !== substr($subnetBin, 0, $fullBytes)) {
++            return false;
++        }
++
++        $remainderBits = $maskBits % 8;
++        if ($remainderBits === 0) {
++            return true;
++        }
++
++        $mask = chr((0xFF << (8 - $remainderBits)) & 0xFF);
++        return (ord($ipBin[$fullBytes]) & ord($mask)) === (ord($subnetBin[$fullBytes]) & ord($mask));
++    }
++
++    /**
++     * Test-only: clear the captured peer address.
++     *
++     * @internal
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function resetOriginalRemoteAddrForTesting(): void
++    {
++        self::$originalRemoteAddr = null;
++    }
++
++    /**
++     * Test-only: clear the cached parsed TRUSTED_PROXIES list.
++     *
++     * @internal
++     * @since ZC v2.3.0 (backported)
++     */
++    public static function resetTrustedProxiesCacheForTesting(): void
++    {
++        self::$trustedProxiesCache = null;
++    }
+ }
+diff --git a/includes/classes/ResourceLoaders/SideboxFinder.php b/includes/classes/ResourceLoaders/SideboxFinder.php
+index c79f6b567..b594983b4 100644
+--- a/includes/classes/ResourceLoaders/SideboxFinder.php
++++ b/includes/classes/ResourceLoaders/SideboxFinder.php
+@@ -23,8 +23,8 @@ public function findFromFilesystem($installedPlugins, $templateDir)
+                 $sideboxes[$file] = $plugin['unique_key'] . '/' . $plugin['version'];
+             }
+        }
+-        $mainDir = DIR_FS_CATALOG_MODULES . 'sideboxes/';
+-        $mainDirTpl = DIR_FS_CATALOG_MODULES . 'sideboxes/' . $templateDir . '/';
++        $mainDir = DIR_FS_CATALOG . DIR_WS_MODULES . 'sideboxes/';
++        $mainDirTpl = $mainDir . $templateDir . '/';
+         $files = $this->filesystem->listFilesFromDirectoryAlphaSorted($mainDir);
+         foreach ($files as $file) {
+             $sideboxes[$file] = '';
+diff --git a/includes/classes/class.search.php b/includes/classes/class.search.php
+index b2dd1eb90..fd1358ae2 100644
+--- a/includes/classes/class.search.php
++++ b/includes/classes/class.search.php
+@@ -230,8 +230,9 @@ public function buildSearchSQL() {
+             p.products_price, p.products_tax_class_id, p.products_price_sorter,
+             p.products_qty_box_status, p.master_categories_id, p.product_is_call ";
+ 
+-        if ((DISPLAY_PRICE_WITH_TAX == 'true') && (!empty($this->searchOptions->pfrom) || !empty($this->searchOptions->pto))) {
+-            $select_str .= ", SUM(tr.tax_rate) AS tax_rate ";
++        $displaying_prices_with_tax = (DISPLAY_PRICE_WITH_TAX === 'true');
++        if ($displaying_prices_with_tax && (!empty($this->searchOptions->pfrom) || !empty($this->searchOptions->pto))) {
++            $select_str .= ", tr2.tax_rate ";
+         }
+ 
+         // Notifier Point
+@@ -248,18 +249,21 @@ public function buildSearchSQL() {
+             $from_str = $db->bindVars($from_str, ':languagesID', $_SESSION['languages_id'], 'integer');
+         }
+ 
+-        if ((DISPLAY_PRICE_WITH_TAX == 'true') && !empty($this->searchOptions->pfrom) || !empty($this->searchOptions->pto)) {
++        if ($displaying_prices_with_tax && (!empty($this->searchOptions->pfrom) || !empty($this->searchOptions->pto))) {
+             if (empty($_SESSION['customer_country_id'])) {
+                 $_SESSION['customer_country_id'] = STORE_COUNTRY;
+                 $_SESSION['customer_zone_id'] = STORE_ZONE;
+             }
+-            $from_str .= " LEFT JOIN " . TABLE_TAX_RATES . " tr
+-                        ON p.products_tax_class_id = tr.tax_class_id
+-                        LEFT JOIN " . TABLE_ZONES_TO_GEO_ZONES . " gz
+-                        ON tr.tax_zone_id = gz.geo_zone_id
+-                        AND (gz.zone_country_id IS null OR gz.zone_country_id = 0 OR gz.zone_country_id = :zoneCountryID)
+-                        AND (gz.zone_id IS null OR gz.zone_id = 0 OR gz.zone_id = :zoneID)";
+-
++            $from_str .=
++                " LEFT JOIN (
++                    SELECT SUM(tr.tax_rate) AS tax_rate, tr.tax_class_id
++                      FROM " . TABLE_TAX_RATES . " tr
++                        INNER JOIN " . TABLE_ZONES_TO_GEO_ZONES . " gz
++                            ON tr.tax_zone_id = gz.geo_zone_id
++                           AND (gz.zone_country_id IS NULL OR gz.zone_country_id = 0 OR gz.zone_country_id = :zoneCountryID)
++                           AND (gz.zone_id IS NULL OR gz.zone_id = 0 OR gz.zone_id = :zoneID)
++                     GROUP BY tr.tax_class_id
++                ) AS tr2 ON tr2.tax_class_id = p.products_tax_class_id ";
+             $from_str = $db->bindVars($from_str, ':zoneCountryID', $_SESSION['customer_country_id'], 'integer');
+             $from_str = $db->bindVars($from_str, ':zoneID', $_SESSION['customer_zone_id'], 'integer');
+         }
+@@ -337,7 +341,7 @@ public function buildSearchSQL() {
+         }
+         $where_str .= ')';
+         if (!empty($this->searchOptions->alpha_filter_id)) {
+-            $alpha_sort = " and (pd.products_name LIKE '" . chr($this->searchOptions->alpha_filter_id) . "%') ";
++            $alpha_sort = " and (pd.products_name LIKE '" . zen_db_input(chr($this->searchOptions->alpha_filter_id)) . "%') ";
+             $where_str .= $alpha_sort;
+         } else {
+             $alpha_sort = '';
+@@ -365,13 +369,13 @@ public function buildSearchSQL() {
+             }
+         }
+ 
+-        if (DISPLAY_PRICE_WITH_TAX == 'true') {
++        if ($displaying_prices_with_tax) {
+             if (!empty($this->searchOptions->pfrom)) {
+-                $where_str .= " AND (p.products_price_sorter * IF(gz.geo_zone_id IS null, 1, 1 + (tr.tax_rate / 100)) >= :price)";
++                $where_str .= " AND (p.products_price_sorter * IF(tr2.tax_rate IS NULL, 1, 1 + (tr2.tax_rate / 100)) >= :price)";
+                 $where_str = $db->bindVars($where_str, ':price', $this->searchOptions->pfrom, 'float');
+             }
+             if (!empty($this->searchOptions->pto)) {
+-                $where_str .= " AND (p.products_price_sorter * IF(gz.geo_zone_id IS null, 1, 1 + (tr.tax_rate / 100)) <= :price)";
++                $where_str .= " AND (p.products_price_sorter * IF(tr2.tax_rate IS NULL, 1, 1 + (tr2.tax_rate / 100)) <= :price)";
+                 $where_str = $db->bindVars($where_str, ':price', $this->searchOptions->pto, 'float');
+             }
+         } else {
+@@ -390,12 +394,6 @@ public function buildSearchSQL() {
+ 
+         // Notifier Point
+         $this->notify('NOTIFY_SEARCH_WHERE_STRING', $this->searchOptions->keywords, $where_str, $keyword_search_fields);
+-
+-
+-        if ((DISPLAY_PRICE_WITH_TAX == 'true') && (!empty($this->searchOptions->pfrom)) || !empty($this->searchOptions->pto)) {
+-            $where_str .= " group by p.products_id, tr.tax_priority";
+-        }
+-
+         // set the default sort order setting from the Admin when not defined by customer
+         if (empty($this->searchOptions->sort) and PRODUCT_LISTING_DEFAULT_SORT_ORDER != '') {
+             $this->searchOptions->sort = PRODUCT_LISTING_DEFAULT_SORT_ORDER;
+diff --git a/includes/classes/observers/auto.non_captcha_observer.php b/includes/classes/observers/auto.non_captcha_observer.php
+index 0f658e5b6..9dbc95cbd 100644
+--- a/includes/classes/observers/auto.non_captcha_observer.php
++++ b/includes/classes/observers/auto.non_captcha_observer.php
+@@ -21,6 +21,7 @@ public function __construct()
+             'NOTIFY_CREATE_ACCOUNT_CAPTCHA_CHECK',
+             'NOTIFY_CONTACT_US_CAPTCHA_CHECK',
+             'NOTIFY_REVIEWS_WRITE_CAPTCHA_CHECK',
++            'NOTIFY_ASK_A_QUESTION_CAPTCHA_CHECK',
+         ]);
+ 
+         if (empty($_SESSION['antispam_fieldname'])) {
+@@ -45,6 +46,18 @@ public function updateNotifyContactUsCaptchaCheck(&$class, $eventID, $paramsArra
+         $this->update($class, $eventID, $paramsArray);
+     }
+ 
++    /**
++     * @since ZC v3.0.0 (backported)
++     */
++    public function updateNotifyAskAQuestionCaptchaCheck(&$class, $eventID, $paramsArray)
++    {
++        // sanitize the contactname field more aggressively
++        $GLOBALS['name'] = zen_db_prepare_input(zen_sanitize_string($_POST['contactname'] ?? ''));
++
++        // fire default tests
++        $this->update($class, $eventID, $paramsArray);
++    }
++
+     protected function testAntiSpamFields()
+     {
+         if (!empty($_POST[$_SESSION['antispam_fieldname']]) || !empty($_POST['should_be_empty'])) {
+@@ -93,6 +106,11 @@ protected function testURLSpam()
+             'enquiry',     // comment-out if you actually want to allow URLs for this
+         ];
+ 
++        // -----
++        // Fire notification to enable plugins to add to the list of sanitized fields
++        //
++        $this->notify('NOTIFY_NONCAPTCHA_OBSERVER_FIELD_CHECK', $fields, $fields);
++
+         // prepare for inspection
+         foreach ($fields as $field) {
+             if (!empty($_POST[$field])) {
+@@ -100,7 +118,9 @@ protected function testURLSpam()
+             }
+         }
+ 
+-        if (empty(trim($test_string))) return;
++        if (empty(trim($test_string))) {
++            return;
++        }
+ 
+         $test_string = str_ireplace([HTTP_SERVER, HTTPS_SERVER], '', $test_string);
+ 
+diff --git a/includes/classes/shopping_cart.php b/includes/classes/shopping_cart.php
+index b82eef94e..712f3ee29 100644
+--- a/includes/classes/shopping_cart.php
++++ b/includes/classes/shopping_cart.php
+@@ -77,6 +77,19 @@ class shoppingCart extends base
+      */
+     protected $flag_duplicate_quantity_msgs_set = [];
+ 
++    /**
++     * Hard ceiling on the number of distinct line items (uprids) which a single
++     * cart may hold. Guards against traffic floods that add many distinct items
++     * which balloon the session record and per-item queries.
++     */
++    protected const MAX_CART_DISTINCT_LINE_ITEMS = 200;
++
++    /**
++     * Hard ceiling on the number of file-upload attributes processed per add-to-cart
++     * request, independent of the client-supplied number_of_uploads value.
++     */
++    protected const MAX_UPLOAD_COUNT = 50;
++
+     /**
+      * Instantiate a new shopping cart object
+      */
+@@ -128,11 +141,13 @@ public function restore_contents()
+ 
+                     if (isset($data['attributes'])) {
+                         foreach ($data['attributes'] as $option => $value) {
++                            $option_id = (int)$option;
++                            $value = (int)$value;
+ 
+                             // include attribute value: needed for text attributes
+-                            $attr_value = $data['attributes_values'][$option] ?? '';
++                            $attr_value = $data['attributes_values'][$option_id] ?? '';
+ 
+-                            $products_options_sort_order = zen_get_attributes_options_sort_order(zen_get_prid($uprid), $option, $value);
++                            $products_options_sort_order = zen_get_attributes_options_sort_order(zen_get_prid($uprid), $option_id, $value);
+                             if ($attr_value) {
+                                 $attr_value = zen_db_input($attr_value);
+                             }
+@@ -140,7 +155,7 @@ public function restore_contents()
+                                 "INSERT INTO " . TABLE_CUSTOMERS_BASKET_ATTRIBUTES . "
+                                     (customers_id, products_id, products_options_id, products_options_value_id, products_options_value_text, products_options_sort_order)
+                                  VALUES
+-                                    (" . (int)$_SESSION['customer_id'] . ", '$uprid_db', '$option', '$value', '$attr_value', '$products_options_sort_order')";
++                                    (" . (int)$_SESSION['customer_id'] . ", '$uprid_db', '" . zen_db_input((string)$option) . "', $value, '$attr_value', '$products_options_sort_order')";
+ 
+                             $db->Execute($sql);
+                         }
+@@ -281,15 +296,23 @@ public function add_cart($product_id, $qty = 1, $attributes = [], $notify = true
+         }
+         $this->notify('NOTIFIER_CART_ADD_CART_START', null, $product_id, $qty, $attributes, $notify);
+         $uprid = zen_get_uprid($product_id, $attributes);
+-        if ($notify) {
+-            $_SESSION['new_products_id_in_cart'] = $uprid;
+-        }
+ 
+         $qty = $this->adjust_quantity($qty, $uprid, 'shopping_cart');
+ 
+         if ($this->in_cart($uprid)) {
+             $this->update_quantity($uprid, $qty, $attributes);
++            if ($notify) {
++                $_SESSION['new_products_id_in_cart'] = $uprid;
++            }
++        } elseif (count($this->contents) >= self::MAX_CART_DISTINCT_LINE_ITEMS) {
++            defined('WARNING_CART_ITEM_LIMIT_REACHED') || define('WARNING_CART_ITEM_LIMIT_REACHED', 'Your shopping cart has reached the maximum number of different items allowed. Please remove an item before adding another.');
++            $messageStack->add_session('header', WARNING_CART_ITEM_LIMIT_REACHED, 'caution');
++            $this->notify('NOTIFIER_CART_ADD_CART_END', null, $product_id, $qty, $attributes, $notify);
++            return;
+         } else {
++            if ($notify) {
++                $_SESSION['new_products_id_in_cart'] = $uprid;
++            }
+             $this->contents[] = [$uprid];  // @TODO - why is this line here? Appears to be removed in the call to cleanup(), so doesn't really serve any purpose here.
+             $this->contents[$uprid] = ['qty' => (float)$qty];
+ 
+@@ -333,17 +356,22 @@ public function add_cart($product_id, $qty = 1, $attributes = [], $notify = true
+                     }
+ 
+                     if ($blank_value === false) {
++                        $option = (int)$option;
+                         if (is_array($value)) {
++                            $sanitizedValues = [];
+                             foreach ($value as $opt => $val) {
++                                $val = (int)$val;
++                                $sanitizedValues[$opt] = $val;
+                                 $this->contents[$uprid]['attributes'][$option . '_chk' . $val] = $val;
+                             }
++                            $value = $sanitizedValues;
+                         } else {
++                            $value = (int)$value;
+                             $this->contents[$uprid]['attributes'][$option] = $value;
+                         }
+ 
+                         if (zen_is_logged_in() && !zen_in_guest_checkout()) {
+                             $customer_id = (int)$_SESSION['customer_id'];
+-                            $option = (int)$option;
+                             if (is_array($value)) {
+                                 foreach ($value as $opt => $val) {
+                                     $products_options_sort_order = zen_get_attributes_options_sort_order($prid, $option, $opt);
+@@ -453,11 +481,17 @@ function update_quantity($uprid, $quantity = 0, $attributes = [])
+                 }
+ 
+                 if ($blank_value === false) {
++                    $option = (int)$option;
+                     if (is_array($value)) {
++                        $sanitizedValues = [];
+                         foreach ($value as $opt => $val) {
++                            $val = (int)$val;
++                            $sanitizedValues[$opt] = $val;
+                             $this->contents[$uprid]['attributes'][$option . '_chk' . $val] = $val;
+                         }
++                        $value = $sanitizedValues;
+                     } else {
++                        $value = (int)$value;
+                         $this->contents[$uprid]['attributes'][$option] = $value;
+                     }
+ 
+@@ -930,6 +964,7 @@ public function calculate()
+                 } // eof foreach
+             } // attributes price
+             $productTotal = $savedProductTotal + $attributesTotal;
++            $productTotal = max(0, $productTotal);
+ 
+             // attributes weight
+             if (isset($this->contents[$uprid]['attributes'])) {
+@@ -2026,9 +2061,10 @@ public function actionAddProduct($goto, $parameters = [])
+                          *
+                          */
+                         include_once DIR_WS_CLASSES . 'upload.php';
+-                        for ($i = 1, $n = $_GET['number_of_uploads']; $i <= $n; $i++) {
++                        for ($i = 1, $n = min((int)$_GET['number_of_uploads'], self::MAX_UPLOAD_COUNT); $i <= $n; $i++) {
+                             $upload_prefix = UPLOAD_PREFIX . $i;
+                             $text_prefix = TEXT_PREFIX . ($_POST[$upload_prefix] ?? '');
++                            $text_upload_prefix = TEXT_PREFIX . $upload_prefix;
+                             if (isset($_POST[$upload_prefix]) && !empty($_FILES['id']['tmp_name'][$text_prefix]) && (!isset($_POST[$upload_prefix], $_FILES['id']['tmp_name'][$text_prefix]) || $_FILES['id']['tmp_name'][$text_prefix] != 'none')) {
+                                 $products_options_file = new upload('id');
+                                 $products_options_file->set_destination(DIR_FS_UPLOADS);
+@@ -2044,14 +2080,35 @@ public function actionAddProduct($goto, $parameters = [])
+                                     $real_ids[$text_prefix] = $insert_id . ". " . $products_options_file->filename;
+                                     $products_options_file->set_filename($insert_id . $products_image_extension);
+                                     if (!($products_options_file->save())) {
++                                        unset($real_ids[$text_prefix]);
++                                        $db->Execute("DELETE FROM " . TABLE_FILES_UPLOADED . " WHERE files_uploaded_id = " . (int)$insert_id . " LIMIT 1");
+                                         break;
+                                     }
+                                 } else {
+                                     break;
+                                 }
+                             } else { // No file uploaded -- use previous value
+-                                $real_ids[$text_prefix] = $_POST[$text_prefix] ?? '';
+-                                if (!zen_get_attributes_valid($_POST['products_id'], $text_prefix, !empty($_POST[$text_prefix]) ? $_POST[$text_prefix] : '')) {
++                                $posted_reused_upload_value = $_POST[$text_upload_prefix] ?? ($_POST[$text_prefix] ?? '');
++                                $reused_upload_value = '';
++                                if ($posted_reused_upload_value !== '') {
++                                    $reused_files_uploaded_id = (int)$posted_reused_upload_value;
++                                    if ($reused_files_uploaded_id > 0) {
++                                        $ownership_sql = "SELECT files_uploaded_id, files_uploaded_name
++                                                          FROM " . TABLE_FILES_UPLOADED . "
++                                                          WHERE files_uploaded_id = " . $reused_files_uploaded_id . "
++                                                          AND (sesskey = '" . zen_session_id() . "'";
++                                        if (zen_is_logged_in()) {
++                                            $ownership_sql .= " OR customers_id = " . (int)$_SESSION['customer_id'];
++                                        }
++                                        $ownership_sql .= ") LIMIT 1";
++                                        $ownership_check = $db->Execute($ownership_sql);
++                                        if (!$ownership_check->EOF) {
++                                            $reused_upload_value = $reused_files_uploaded_id . '. ' . $ownership_check->fields['files_uploaded_name'];
++                                        }
++                                    }
++                                }
++                                $real_ids[$text_prefix] = $reused_upload_value;
++                                if (!zen_get_attributes_valid($_POST['products_id'], $text_prefix, $reused_upload_value)) {
+                                     $the_list .=
+                                         TEXT_ERROR_OPTION_FOR .
+                                         '<span class="alertBlack">' .
+diff --git a/includes/classes/upload.php b/includes/classes/upload.php
+index 323927d1f..52d9676bb 100644
+--- a/includes/classes/upload.php
++++ b/includes/classes/upload.php
+@@ -32,6 +32,7 @@ class upload extends base
+     protected $message_location;
+     protected $permissions;
+     protected $tmp_filename;
++    protected $permitted_destination_base;
+     
+     function __construct($file = '', $destination = '', $permissions = '644', $extensions = array())
+     {
+@@ -211,8 +212,80 @@ function set_extensions($extensions)
+         }
+     }
+ 
++    /**
++     * @since ZC v2.2.3 (backported)
++     */
++    function setPermittedDestinationBase($base)
++    {
++        $this->permitted_destination_base = empty($base) ? null : $base;
++    }
++
++    /**
++     * @since ZC v2.2.3 (backported)
++     */
++    function getPermittedDestinationBases()
++    {
++        if (!empty($this->permitted_destination_base)) {
++            return [$this->permitted_destination_base];
++        }
++
++        $bases = [];
++        foreach (['DIR_FS_CATALOG_IMAGES', 'DIR_FS_CATALOG_MEDIA', 'DIR_FS_UPLOADS', 'DIR_WS_ADMIN_ATTACHMENTS'] as $const) {
++            if (defined($const) && constant($const) !== '') {
++                $bases[] = constant($const);
++            }
++        }
++
++        return $bases;
++    }
++
++    /**
++     * @since ZC v2.2.3 (backported)
++     */
++    function destinationIsContained()
++    {
++        $bases = $this->getPermittedDestinationBases();
++        if (empty($bases)) {
++            return true;
++        }
++
++        $destination = (string)$this->destination;
++        if (strpos($destination, "\0") !== false) {
++            return false;
++        }
++
++        $destination_real = realpath($destination);
++        if ($destination_real === false) {
++            return false;
++        }
++        $destination_real = rtrim($destination_real, '/\\') . DIRECTORY_SEPARATOR;
++
++        foreach ($bases as $base) {
++            $base = (string)$base;
++            if ($base === '' || strpos($base, "\0") !== false) {
++                continue;
++            }
++            $base_real = realpath($base);
++            if ($base_real === false) {
++                continue;
++            }
++            $base_real = rtrim($base_real, '/\\') . DIRECTORY_SEPARATOR;
++            if (strpos($destination_real, $base_real) === 0) {
++                return true;
++            }
++        }
++
++        return false;
++    }
++
+     function check_destination()
+     {
++        if (strpos((string)$this->destination, "\0") !== false) {
++            $this->message_stack(sprintf(ERROR_DESTINATION_NOT_WRITEABLE, $this->destination), 'error');
++
++            return false;
++        }
++
+         if (!is_writeable($this->destination)) {
+             if (is_dir($this->destination)) {
+                 $this->message_stack(sprintf(ERROR_DESTINATION_NOT_WRITEABLE, $this->destination), 'error');
+@@ -223,6 +296,15 @@ function check_destination()
+             return false;
+         }
+ 
++        if (!$this->destinationIsContained()) {
++            $this->message_stack(sprintf(ERROR_DESTINATION_NOT_WRITEABLE, $this->destination), 'error');
++            if (function_exists('zen_record_admin_activity')) {
++                zen_record_admin_activity('Upload destination rejected: invalid target directory (' . $this->destination . ')', 'warning');
++            }
++
++            return false;
++        }
++
+         return true;
+     }
+ 
+diff --git a/includes/dist-configure.php b/includes/dist-configure.php
+index 5a046552a..3d9c0e2f1 100644
+--- a/includes/dist-configure.php
++++ b/includes/dist-configure.php
+@@ -56,6 +56,19 @@
+  */
+ define('SQL_CACHE_METHOD', 'none');
+ 
++/**
++ * Optional: List of trusted proxy IP addresses.
++ * Leave it as an empty string/array if you are not using a proxy.
++ *
++ * But if you are hosting behind a proxy such as Cloudflare, you must add the official IP addresses of the proxy here.
++ * For example, for Cloudflare, you can find the list of IP addresses here: https://www.cloudflare.com/ips/
++ *
++ * Entries may be individual IPs or CIDR ranges (e.g. '173.245.48.0/20'),
++ * both IPv4 and IPv6 are supported.
++ * Supports listing entries as an array or a comma-delimited string.
++ */
++define('TRUSTED_PROXIES', []);
++
+ /**
+  * Reserved for future use
+  */
+diff --git a/includes/functions/functions_customers.php b/includes/functions/functions_customers.php
+index 2293e496e..e5721401b 100644
+--- a/includes/functions/functions_customers.php
++++ b/includes/functions/functions_customers.php
+@@ -107,7 +107,7 @@ function zen_check_email_address_not_already_used(string $email, int $customer_i
+ 
+     $sql = "SELECT customers_id
+             FROM " . TABLE_CUSTOMERS . "
+-            WHERE customers_email_address = '" . zen_db_input($email) . "'
++            WHERE LOWER(customers_email_address) = LOWER('" . zen_db_input($email) . "')
+             AND customers_id != " . (int)$customer_id_to_exclude;
+     $result = $db->Execute($sql);
+ 
+diff --git a/includes/functions/functions_email.php b/includes/functions/functions_email.php
+index 472297137..6997e4ec8 100755
+--- a/includes/functions/functions_email.php
++++ b/includes/functions/functions_email.php
+@@ -75,7 +75,7 @@ function zen_mail($to_name, $to_address, $email_subject, $email_text, $from_emai
+         }
+ 
+         // check for injection attempts. If new-line characters found in header fields, simply fail to send the message
+-        foreach ([$from_email_address, $to_address, $from_email_name, $to_name, $email_subject] as $key => $value) {
++        foreach ([$from_email_address, $to_address, $from_email_name, $to_name, $email_subject, $email_reply_to_address, $email_reply_to_name] as $key => $value) {
+             if (strpos($value, "\r") !== false || strpos($value, "\n") !== false) {
+                 return false;
+             }
+@@ -180,6 +180,9 @@ function zen_mail($to_name, $to_address, $email_subject, $email_text, $from_emai
+             $email_text = preg_replace('/(&amp;)+/', '&', $email_text);
+             $email_text = preg_replace('/&{2,}/', '&', $email_text);
+ 
++            // Convert non-breaking hyphen to regular hyphen for text message
++            $email_text = str_replace('&#8209;', '-', $email_text);
++
+             // clean up currencies for text emails
+             if (defined('CURRENCIES_TRANSLATIONS') && !empty(CURRENCIES_TRANSLATIONS)) {
+                 $zen_fix_currencies = preg_split("/[:,]/", str_replace(' ', '', CURRENCIES_TRANSLATIONS));
+diff --git a/includes/functions/functions_general_shared.php b/includes/functions/functions_general_shared.php
+index e88697a4e..36997ced9 100644
+--- a/includes/functions/functions_general_shared.php
++++ b/includes/functions/functions_general_shared.php
+@@ -108,6 +108,54 @@ function issetorArray(array $array, $key, $default = null)
+ }
+ 
+ 
++/**
++ * Returns the CSRF token supplied for the current request, preferring the request header.
++ *
++ * If both the request header and POST field are present but don't match, null is returned
++ * so callers fail closed rather than silently choosing one source.
++ *
++ * @since ZC v2.2.3 (backported)
++ */
++function zen_get_csrf_token_from_request(): ?string
++{
++    $headerToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
++    $postToken = $_POST['securityToken'] ?? null;
++
++    $hasHeaderToken = is_string($headerToken) && $headerToken !== '';
++    $hasPostToken = is_string($postToken) && $postToken !== '';
++
++    if ($hasHeaderToken) {
++        if ($hasPostToken && !hash_equals($headerToken, $postToken)) {
++            return null;
++        }
++
++        return $headerToken;
++    }
++
++    return $hasPostToken ? $postToken : null;
++}
++
++
++/**
++ * Validates the current request's CSRF token against the session token.
++ *
++ * @since ZC v2.2.3 (backported)
++ */
++function zen_request_has_valid_csrf_token(): bool
++{
++    if (!isset($_SESSION['securityToken']) || !is_string($_SESSION['securityToken']) || $_SESSION['securityToken'] === '') {
++        return false;
++    }
++
++    $requestToken = zen_get_csrf_token_from_request();
++    if (!is_string($requestToken) || $requestToken === '') {
++        return false;
++    }
++
++    return hash_equals($_SESSION['securityToken'], $requestToken);
++}
++
++
+ /**
+  * Get a shortened filename to fit within the db field constraints
+  *
+@@ -484,4 +532,3 @@ function zen_get_orders_status()
+    trigger_error('Call to deprecated function; please use new names', E_USER_DEPRECATED);
+    return zen_get_orders_status_pulldown_array();
+ }
+-
+diff --git a/includes/functions/functions_lookups.php b/includes/functions/functions_lookups.php
+index 95f3f8578..e3d80947c 100644
+--- a/includes/functions/functions_lookups.php
++++ b/includes/functions/functions_lookups.php
+@@ -238,6 +238,60 @@ function zen_check_url_get_terms()
+     return false;
+ }
+ 
++/**
++ * Check whether the specified page legitimately builds a breadcrumb from catalog-filter GET params
++ * (eg: products_id, manufacturers_id, cPath, and other registered "get terms").
++ * Used to gate the associated database lookups so that a page NOT in this list
++ * (e.g. a bot spoofing catalog params on the shopping cart, checkout, or account pages)
++ * doesn't trigger wasted lookups. This is allow-list, not deny-list: a new page (core or plugin)
++ * is safe by default and must be recognized here before it gets them.
++ *
++ * Product-detail pages vary by product type (product_info, document_general_info, etc.),
++ * including types registered by plugins, so that part of the list is derived from TABLE_PRODUCT_TYPES
++ * rather than hardcoded. That query only runs once per request and the query is also cached for an hour.
++ *
++ * Plugins that add their own catalog-browsing page can register it via the
++ * NOTIFY_CATALOG_BREADCRUMB_LOOKUP_PAGES observer, by appending to its by-reference
++ * $additionalPages parameter.
++ * (Product-type pages don't need registering because they're covered by the query already.)
++ *
++ * BACKPORTED FROM 2.3.0
++ * @since ZC v2.3.0 (backported)
++ */
++function zen_page_uses_catalog_breadcrumb_lookups(string $current_page): bool
++{
++    global $db, $zco_notifier;
++
++    static $productTypeInfoPages = null;
++    if ($productTypeInfoPages === null) {
++        $productTypeInfoPages = [];
++        $result = $db->Execute('SELECT type_handler FROM ' . TABLE_PRODUCT_TYPES, null, true, 3600);
++        foreach ($result as $productType) {
++            $productTypeInfoPages[] = $productType['type_handler'] . '_info';
++        }
++    }
++
++    $catalogPages = array_merge(
++        [
++            FILENAME_DEFAULT,
++            FILENAME_SEARCH_RESULT,
++            FILENAME_SPECIALS,
++            FILENAME_PRODUCTS_NEW,
++            FILENAME_PRODUCTS_ALL,
++            FILENAME_FEATURED_PRODUCTS,
++            FILENAME_PRODUCT_REVIEWS,
++            FILENAME_PRODUCT_REVIEWS_INFO,
++            FILENAME_PRODUCT_REVIEWS_WRITE,
++        ],
++        $productTypeInfoPages
++    );
++
++    $additionalPages = [];
++    $zco_notifier->notify('NOTIFY_CATALOG_BREADCRUMB_LOOKUP_PAGES', $catalogPages, $additionalPages);
++
++    return in_array($current_page, array_merge($catalogPages, $additionalPages), true);
++}
++
+ 
+ /**
+  * Returns the "name" associated with the specified orders_status_id.
+@@ -282,4 +336,3 @@ function zen_get_order_status_name(int $order_status_id, int $language_id = 0)
+     if ($result->EOF) return 'ERROR: INVALID STATUS ID: ' . (int)$order_status_id;
+     return $result->fields['orders_status_name'] . ' [' . (int)$order_status_id . ']';
+ }
+-
+diff --git a/includes/functions/functions_prices.php b/includes/functions/functions_prices.php
+index 01f7712ee..1750a215d 100644
+--- a/includes/functions/functions_prices.php
++++ b/includes/functions/functions_prices.php
+@@ -681,8 +681,12 @@ function zen_get_products_quantity_min_units_display($product_id, $include_break
+ function zen_get_buy_now_qty($product_id)
+ {
+     $result = zen_get_product_details($product_id);
+-    $check_min = $result->fields['products_quantity_order_min'];
+-    $check_units = $result->fields['products_quantity_order_units'];
++    if ($result->EOF) {
++        return 1; // default buy-now quantity if product not found
++    }
++
++    $check_min = $result->fields['products_quantity_order_min'] ?? 0;
++    $check_units = $result->fields['products_quantity_order_units'] ?? 1;
+     $buy_now_qty = 1;
+ 
+     $mixed_products_in_cart = $_SESSION['cart']->in_cart_mixed($product_id);
+diff --git a/includes/functions/functions_traffic.php b/includes/functions/functions_traffic.php
+index 9679925ae..413ed21f7 100644
+--- a/includes/functions/functions_traffic.php
++++ b/includes/functions/functions_traffic.php
+@@ -13,16 +13,36 @@
+ function zen_get_ip_address() {
+     $ip = '';
+     /**
+-     * resolve any proxies
++     * Resolve any proxies, but only honor the client-suppliable forwarded headers when the genuine
++     * TCP peer is a configured trusted reverse proxy. The trust decision is made against the
++     * captured original peer address (Request::getOriginalRemoteAddr()), so it is correct and
++     * consistent no matter how many times this function is called in a request or whether
++     * init_sessions.php has already overwritten $_SERVER['REMOTE_ADDR'].
++     * When the peer is not a trusted proxy, the original peer address is returned directly.
++     *
++     * A trusted proxy conventionally APPENDS its own observed source address to an existing
++     * forwarded-header value rather than replacing it, so the header can read
++     * "client-claimed-value, hop1, hop2". The leftmost entry is whatever the original,
++     * potentially untrusted, client supplied, and is not authoritative.
++     * Request::resolveClientFromForwardedChain() walks the chain from the right (the trusted side) and
++     * returns the first entry that isn't itself a trusted proxy, instead of naively trusting
++     * whichever value happens to be first.
+      */
+     if (isset($_SERVER)) {
+-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ??
+-            $_SERVER['HTTP_CLIENT_IP'] ??
+-                $_SERVER['HTTP_X_FORWARDED'] ??
+-                    $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'] ??
+-                        $_SERVER['HTTP_FORWARDED_FOR'] ??
+-                            $_SERVER['HTTP_FORWARDED'] ??
+-                                $_SERVER['REMOTE_ADDR'] ?? '';
++        if (\Zencart\Request\Request::isFromTrustedProxy()) {
++            $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ??
++                $_SERVER['HTTP_CLIENT_IP'] ??
++                    $_SERVER['HTTP_X_FORWARDED'] ??
++                        $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'] ??
++                            $_SERVER['HTTP_FORWARDED_FOR'] ??
++                                $_SERVER['HTTP_FORWARDED'] ??
++                                    null;
++            $ip = ($forwarded !== null)
++                ? \Zencart\Request\Request::resolveClientFromForwardedChain((string) $forwarded)
++                : \Zencart\Request\Request::getOriginalRemoteAddr();
++        } else {
++            $ip = \Zencart\Request\Request::getOriginalRemoteAddr();
++        }
+     }
+     if (trim($ip) === '') {
+         if (getenv('HTTP_X_FORWARDED_FOR')) {
+diff --git a/includes/functions/plugin_support.php b/includes/functions/plugin_support.php
+index 317517778..cc4484ba5 100644
+--- a/includes/functions/plugin_support.php
++++ b/includes/functions/plugin_support.php
+@@ -55,6 +55,13 @@ function plugin_version_check_for_updates($plugin_file_id = 0, $version_string_t
+ 
+     if (!is_array($data)) $data = json_decode($data, true);
+ 
++    if (!is_array($data) || isset($data['error']) || !isset($data[0])) {
++        if (LOG_PLUGIN_VERSIONCHECK_FAILURES) {
++            error_log('Version Server response error when checking plugin versions: ' . print_r(!empty($data) ? $data : 'null', true));
++        }
++        return false;
++    }
++
+     if (strcmp($data[0]['latest_plugin_version'], $version_string_to_compare) > 0) $new_version_available = true;
+     // check whether present ZC version is compatible with the latest available plugin version
+     if (!defined('PLUGIN_VERSION_CHECK_MATCHING_OVERRIDE') || empty(PLUGIN_VERSION_CHECK_MATCHING_OVERRIDE)) {
+diff --git a/includes/functions/sessions.php b/includes/functions/sessions.php
+index 0bd17eb80..4834621f9 100644
+--- a/includes/functions/sessions.php
++++ b/includes/functions/sessions.php
+@@ -104,7 +104,7 @@ function zen_session_recreate()
+     if ($http_domain == $https_domain) {
+         $saveSession = $_SESSION;
+         $oldSessID   = session_id();
+-        session_regenerate_id();
++        session_regenerate_id(true);
+         $newSessID = session_id();
+         $_SESSION = $saveSession;
+         if (IS_ADMIN_FLAG !== true) {
+diff --git a/includes/init_includes/init_add_crumbs.php b/includes/init_includes/init_add_crumbs.php
+index bdddb1f79..488250327 100644
+--- a/includes/init_includes/init_add_crumbs.php
++++ b/includes/init_includes/init_add_crumbs.php
+@@ -40,44 +40,50 @@
+ 
+ /**
+  * add get terms (e.g manufacturer, music genre, record company or other user defined selector) to breadcrumb
++ *
++ * Only run on pages recognized as legitimately using catalog-filter parameters,
++ * so bots probing arbitrary URLs (shopping cart, checkout, account, etc.)
++ * with spoofed query strings don't run wasted lookups.
+  */
+-$sql =
+-    "SELECT *
+-       FROM " . TABLE_GET_TERMS_TO_FILTER;
+-$get_terms = $db->Execute($sql);
+-foreach ($get_terms as $next_get_term) {
+-    $next_get_term_name = $next_get_term['get_term_name'];
+-    if (isset($_GET[$next_get_term_name])) {
+-        $sql =
+-            "SELECT " . $next_get_term['get_term_name_field'] . "
+-               FROM " . constant($next_get_term['get_term_table']) . "
+-              WHERE " . $next_get_term_name . " = " . (int)$_GET[$next_get_term_name];
+-        $get_term_breadcrumb = $db->Execute($sql, 1);
++if (zen_page_uses_catalog_breadcrumb_lookups($current_page)) {
++    $sql =
++        "SELECT *
++           FROM " . TABLE_GET_TERMS_TO_FILTER;
++    $get_terms = $db->Execute($sql);
++    foreach ($get_terms as $next_get_term) {
++        $next_get_term_name = $next_get_term['get_term_name'];
++        if (isset($_GET[$next_get_term_name])) {
++            $sql =
++                "SELECT " . $next_get_term['get_term_name_field'] . "
++                   FROM " . constant($next_get_term['get_term_table']) . "
++                  WHERE " . $next_get_term_name . " = " . (int)$_GET[$next_get_term_name];
++            $get_term_breadcrumb = $db->Execute($sql, 1);
+ 
+-        if (!$get_term_breadcrumb->EOF) {
+-            // -----
+-            // Enable a watching observer to modify the parameters to a breadcrumb link.
+-            //
+-            $link_parameters = $next_get_term_name . '=' . $_GET[$next_get_term_name];
+-            $zco_notifier->notify('NOTIFY_INIT_ADD_CRUMBS_GET_TERMS_LINK_PARAMETERS', $next_get_term, $link_parameters);
++            if (!$get_term_breadcrumb->EOF) {
++                // -----
++                // Enable a watching observer to modify the parameters to a breadcrumb link.
++                //
++                $link_parameters = $next_get_term_name . '=' . $_GET[$next_get_term_name];
++                $zco_notifier->notify('NOTIFY_INIT_ADD_CRUMBS_GET_TERMS_LINK_PARAMETERS', $next_get_term, $link_parameters);
+ 
+-            $breadcrumb->add($get_term_breadcrumb->fields[$next_get_term['get_term_name_field']], zen_href_link(FILENAME_DEFAULT, $link_parameters));
++                $breadcrumb->add($get_term_breadcrumb->fields[$next_get_term['get_term_name_field']], zen_href_link(FILENAME_DEFAULT, $link_parameters));
++            }
+         }
+     }
+-}
+ 
+-/**
+- * add the products name to the breadcrumb trail
+- */
+-if (isset($_GET['products_id'])) {
+-    $productname_query =
+-        "SELECT products_name
+-           FROM " . TABLE_PRODUCTS_DESCRIPTION . "
+-          WHERE products_id = " . (int)$_GET['products_id'] . "
+-            AND language_id = " . (int)$_SESSION['languages_id'];
+-    $productname = $db->Execute($productname_query, 1);
++    /**
++     * add the products name to the breadcrumb trail
++     */
++    if (isset($_GET['products_id'])) {
++        $productname_query =
++            "SELECT products_name
++               FROM " . TABLE_PRODUCTS_DESCRIPTION . "
++              WHERE products_id = " . (int)$_GET['products_id'] . "
++                AND language_id = " . (int)$_SESSION['languages_id'];
++        $productname = $db->Execute($productname_query, 1);
+ 
+-    if (!$productname->EOF) {
+-        $breadcrumb->add($productname->fields['products_name'], zen_href_link(zen_get_info_page($_GET['products_id']), 'cPath=' . $cPath . '&products_id=' . $_GET['products_id']));
++        if (!$productname->EOF) {
++            $breadcrumb->add($productname->fields['products_name'], zen_href_link(zen_get_info_page($_GET['products_id']), 'cPath=' . $cPath . '&products_id=' . $_GET['products_id']));
++        }
+     }
+ }
+diff --git a/includes/init_includes/init_category_path.php b/includes/init_includes/init_category_path.php
+index 8ec091ece..241f4fbe0 100644
+--- a/includes/init_includes/init_category_path.php
++++ b/includes/init_includes/init_category_path.php
+@@ -12,7 +12,14 @@
+ }
+ 
+ $show_welcome = false;
+-if (isset($_GET['cPath'])) {
++if (!zen_page_uses_catalog_breadcrumb_lookups($current_page)) {
++    // Only pages recognized as legitimately using catalog-filter parameters
++    // derive $cPath from cPath/products_id GET params.
++    // Other pages related to accounts and checkout ignore them entirely,
++    // including a directly-supplied cPath, to avoid wasted category-lookup queries
++    // when bots probe arbitrary pages with spoofed query strings.
++    $cPath = '';
++} elseif (isset($_GET['cPath'])) {
+     $cPath = $_GET['cPath'];
+ } elseif (isset($_GET['products_id']) && !zen_check_url_get_terms()) {
+     $cPath = zen_get_product_path($_GET['products_id']);
+diff --git a/includes/init_includes/init_file_db_names.php b/includes/init_includes/init_file_db_names.php
+index e129c6cf0..58c3372a3 100644
+--- a/includes/init_includes/init_file_db_names.php
++++ b/includes/init_includes/init_file_db_names.php
+@@ -15,16 +15,7 @@
+  * Currently only used as a helper when generating protocol-matched URLs for forms, templates, etc.
+  * This is not used as a validation tool at all in Zen Cart core code.
+  */
+-$request_type = (((isset($_SERVER['HTTPS']) && (strtolower($_SERVER['HTTPS']) == 'on' || $_SERVER['HTTPS'] == '1'))) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_BY']) && strpos(strtoupper($_SERVER['HTTP_X_FORWARDED_BY']), 'SSL') !== false) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_HOST']) && (strpos(strtoupper($_SERVER['HTTP_X_FORWARDED_HOST']), 'SSL') !== false || strpos(strtolower($_SERVER['HTTP_X_FORWARDED_HOST']), str_replace('https://', '', HTTPS_SERVER)) !== false)) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_SERVER']) && strpos(strtolower($_SERVER['HTTP_X_FORWARDED_SERVER']), str_replace('https://', '', HTTPS_SERVER)) !== false) ||
+-                 (isset($_SERVER['SCRIPT_URI']) && strtolower(substr($_SERVER['SCRIPT_URI'], 0, 6)) == 'https:') ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && ($_SERVER['HTTP_X_FORWARDED_SSL'] == '1' || strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) == 'on')) ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && (strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'ssl' || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https')) ||
+-                 (isset($_SERVER['HTTP_SSLSESSIONID']) && $_SERVER['HTTP_SSLSESSIONID'] != '') ||
+-                 (isset($_SERVER['HTTP_X_FORWARDED_PORT']) && $_SERVER['HTTP_X_FORWARDED_PORT'] == '443') ||
+-                 (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443')) ? 'SSL' : 'NONSSL';
++$request_type = \Zencart\Request\Request::isSecure() ? 'SSL' : 'NONSSL';
+ 
+ /**
+  * set php_self in the local scope
+diff --git a/includes/init_includes/init_sanitize.php b/includes/init_includes/init_sanitize.php
+index 7f92eb3e8..f780cb8d7 100644
+--- a/includes/init_includes/init_sanitize.php
++++ b/includes/init_includes/init_sanitize.php
+@@ -45,7 +45,7 @@
+ if ((isset($_GET['action']) || isset($_POST['action'])) && $_SERVER['REQUEST_METHOD'] == 'POST') {
+     $mainPage = isset($_GET['main_page']) ? $_GET['main_page'] : FILENAME_DEFAULT;
+     if (!in_array($mainPage, $csrfBlackList)) {
+-        if ((!isset($_SESSION ['securityToken']) || !isset($_POST ['securityToken'])) || ($_SESSION ['securityToken'] !== $_POST ['securityToken'])) {
++        if (!zen_request_has_valid_csrf_token()) {
+             zen_redirect(zen_href_link( FILENAME_TIME_OUT, '', $request_type ));
+         }
+     }
+@@ -118,7 +118,7 @@
+     'pto',   //- Searches, price-to (float)
+ ];
+ foreach ($saniGroup3 as $key) {
+-    if (isset($_GET[$key]) && !preg_match('/^\d+(\.\d+)?/', $_GET[$key])) {
++    if (isset($_GET[$key]) && !preg_match('/^\d+(\.\d+)?/', (string)$_GET[$key])) {
+         $_GET[$key] = '';
+         if (isset($_REQUEST[$key])) {
+             $_REQUEST[$key] = '';
+@@ -137,15 +137,15 @@
+ // Other variables with special formatting.
+ //
+ if (isset($_GET['typefilter'])) {
+-    $_GET['typefilter'] = preg_replace('/[^0-9a-zA-Z_-]/', '', $_GET['typefilter']);
++    $_GET['typefilter'] = preg_replace('/[^0-9a-zA-Z_-]/', '', (string)$_GET['typefilter']);
+ }
+ if (isset($_GET['main_page'])) {
+-    $_GET['main_page'] = preg_replace('/[^0-9a-zA-Z_]/', '', $_GET['main_page']);
++    $_GET['main_page'] = preg_replace('/[^0-9a-zA-Z_]/', '', (string)$_GET['main_page']);
+ }
+-if (isset($_GET['sort']) && !ctype_alnum($_GET['sort'])) {
++if (isset($_GET['sort']) && !ctype_alnum((string)$_GET['sort'])) {
+     $_GET['sort'] = '';
+ }
+-if (isset($_GET['gv_no']) && !ctype_alnum($_GET['gv_no'])) {
++if (isset($_GET['gv_no']) && !ctype_alnum((string)$_GET['gv_no'])) {
+     $_GET['gv_no'] = '';
+ }
+ if (isset($_GET['addr']) && !filter_var($_GET['addr'], FILTER_VALIDATE_EMAIL)) {
+@@ -179,9 +179,9 @@
+ ];
+ foreach ($saniGroup4 as $key) {
+     if (isset($_GET[$key])) {
+-        $_GET[$key] = preg_replace('/[^\/0-9a-zA-Z_.-]/', '', $_GET[$key]);
++        $_GET[$key] = preg_replace('/[^\/0-9a-zA-Z_.-]/', '', (string)$_GET[$key]);
+         if (isset($_REQUEST[$key])) {
+-            $_REQUEST[$key] = preg_replace('/[^\/0-9a-zA-Z_.-]/', '', $_REQUEST[$key]);
++            $_REQUEST[$key] = preg_replace('/[^\/0-9a-zA-Z_.-]/', '', (string)$_REQUEST[$key]);
+         }
+     }
+ }
+@@ -195,25 +195,26 @@
+     if (is_array($value)) {
+         foreach ($value as $key2 => $val2){
+             if ($key2 === 'keyword') {
+-                $_GET[$key][$key2] = str_replace($unStrictReplace, '', $val2);
++                $_GET[$key][$key2] = str_replace($unStrictReplace, '', (string)$val2);
+                 if (isset($_REQUEST[$key][$key2])) {
+-                    $_REQUEST[$key][$key2] = str_replace($unStrictReplace, '', $val2);
++                    $_REQUEST[$key][$key2] = str_replace($unStrictReplace, '', (string)$val2);
+                 }
+             } elseif (is_array($val2)) {
+                 foreach ($val2 as $key3 => $val3){
+-                    $_GET[$key][$key2][$key3] = str_replace($strictReplace, '', $val3);
++                    $_GET[$key][$key2][$key3] = str_replace($strictReplace, '', (string)$val3);
+                     if (isset($_REQUEST[$key][$key2][$key3])) {
+-                        $_REQUEST[$key][$key2][$key3] = str_replace($strictReplace, '', $val3);
++                        $_REQUEST[$key][$key2][$key3] = str_replace($strictReplace, '', (string)$val3);
+                     }
+                 }
+             } else {
+-                $_GET[$key][$key2] = str_replace($strictReplace, '', $val2);
++                $_GET[$key][$key2] = str_replace($strictReplace, '', (string)$val2);
+                 if (isset($_REQUEST[$key][$key2])) {
+-                    $_REQUEST[$key][$key2] = str_replace($strictReplace, '', $val2);
++                    $_REQUEST[$key][$key2] = str_replace($strictReplace, '', (string)$val2);
+                 }
+             }
+         }
+     } else {
++        $value = (string)$value;
+         if ($key === 'keyword') {
+             $_GET[$key] = str_replace($unStrictReplace, '', $value);
+             if (isset($_REQUEST[$key])) {
+@@ -252,7 +253,7 @@
+ }
+ 
+ $pageLoader = PageLoader::getInstance();
+-$pageLoader->init($installedPlugins, $_GET['main_page'], new FileSystem);
++$pageLoader->init($installedPlugins, (string)$_GET['main_page'], new FileSystem());
+ 
+ $pageDir = $pageLoader->findModulePageDirectory();
+ if ($pageDir === false) {
+diff --git a/includes/languages/lang.english.php b/includes/languages/lang.english.php
+index 51cfa43a0..dc2a8356d 100644
+--- a/includes/languages/lang.english.php
++++ b/includes/languages/lang.english.php
+@@ -519,6 +519,7 @@
+     'TEXT_WORDS_FREE' => ' Word(s) free ',
+     'TEXT_YOUR_IP_ADDRESS' => 'Your IP Address is: ',
+     'TYPE_BELOW' => 'Type a choice below ...',
++    'WARNING_CART_ITEM_LIMIT_REACHED' => 'Your shopping cart has reached the maximum number of different items allowed. Please remove an item before adding another.',
+     'WARNING_COULD_NOT_LOCATE_LANG_FILE' => 'WARNING: Could not locate language file: ',
+     'WARNING_NO_FILE_UPLOADED' => 'Warning:  no file uploaded.',
+     'WARNING_PRODUCT_QUANTITY_ADJUSTED' => 'Quantity has been adjusted to what is in stock. ',
+diff --git a/includes/modules/checkout_process.php b/includes/modules/checkout_process.php
+index a76945973..51206f48f 100644
+--- a/includes/modules/checkout_process.php
++++ b/includes/modules/checkout_process.php
+@@ -25,6 +25,11 @@
+     }
+   }
+ 
++if ($_SERVER['REQUEST_METHOD'] === 'POST' && !zen_request_has_valid_csrf_token()) {
++    $zco_notifier->notify('NOTIFY_CHECKOUT_PROCESS_CSRF_TOKEN_INVALID');
++    zen_redirect(zen_href_link(FILENAME_TIME_OUT));
++}
++
+ // BEGIN CC SLAM PREVENTION
+ $slamming_threshold = 3;
+ if (!isset($_SESSION['payment_attempt'])) $_SESSION['payment_attempt'] = 0;
+@@ -157,4 +162,3 @@
+   $_SESSION['order_summary']['products_ordered_ids'] = implode('|', array_keys($products_array));
+   $_SESSION['order_summary']['products_ordered_models'] = implode('|', array_values($products_array));
+   $zco_notifier->notify('NOTIFY_CHECKOUT_PROCESS_HANDLE_AFFILIATES');
+-
+diff --git a/includes/modules/column_left.php b/includes/modules/column_left.php
+index 7cd49d8d5..7879cc449 100644
+--- a/includes/modules/column_left.php
++++ b/includes/modules/column_left.php
+@@ -22,12 +22,20 @@
+     ->orderBy('layout_box_sort_order')
+     ->limit(100)->get();
+ 
++$sideboxFinder = new SideboxFinder(new FileSystem());
++$modules_found = $sideboxFinder->findFromFilesystem($installedPlugins, $template_dir);
++
+ $column_width = (int)BOX_WIDTH_LEFT;
+ foreach ($sideboxes as $sidebox) {
+-    $boxFile = (new SideboxFinder(new FileSystem))->sideboxPath($sidebox, $template_dir, true);
++    $box_name = $sidebox['layout_box_name'];
++    if (!empty($sidebox['plugin_details']) && !isset($modules_found[$box_name])) {
++        continue;
++    }
++
++    $boxFile = $sideboxFinder->sideboxPath($sidebox, $template_dir, true);
+     if ($boxFile !== false) {
+-        $box_id = zen_get_box_id($sidebox['layout_box_name']);
+-        include($boxFile . $sidebox['layout_box_name']);
++        $box_id = zen_get_box_id($box_name);
++        require $boxFile . $box_name;
+     }
+ }
+ $box_id = '';
+diff --git a/includes/modules/column_right.php b/includes/modules/column_right.php
+index b3ae94975..bd3800827 100644
+--- a/includes/modules/column_right.php
++++ b/includes/modules/column_right.php
+@@ -22,12 +22,20 @@
+                       ->orderBy('layout_box_sort_order')
+                       ->limit(100)->get();
+ 
++$sideboxFinder = new SideboxFinder(new FileSystem());
++$modules_found = $sideboxFinder->findFromFilesystem($installedPlugins, $template_dir);
++
+ $column_width = (int)BOX_WIDTH_RIGHT;
+ foreach ($sideboxes as $sidebox) {
+-    $boxFile = (new SideboxFinder(new FileSystem))->sideboxPath($sidebox, $template_dir, true);
++    $box_name = $sidebox['layout_box_name'];
++    if (!empty($sidebox['plugin_details']) && !isset($modules_found[$box_name])) {
++        continue;
++    }
++
++    $boxFile = $sideboxFinder->sideboxPath($sidebox, $template_dir, true);
+     if ($boxFile !== false) {
+-        $box_id = zen_get_box_id($sidebox['layout_box_name']);
+-        include($boxFile . $sidebox['layout_box_name']);
++        $box_id = zen_get_box_id($box_name);
++        require $boxFile . $box_name;
+     }
+ }
+ $box_id = '';
+diff --git a/includes/modules/create_account.php b/includes/modules/create_account.php
+index ad75807a6..06a383d8c 100644
+--- a/includes/modules/create_account.php
++++ b/includes/modules/create_account.php
+@@ -292,9 +292,7 @@
+         $result = $customer->create($data);
+         if (!empty($result)) {
+             $customer->login($result['customers_id'], $restore_cart = true);
+-            if (SESSION_RECREATE === 'True') {
+-                zen_session_recreate();
+-            }
++            zen_session_recreate();
+         }
+ 
+         // do any 3rd-party nick creation
+diff --git a/includes/modules/order_total/ot_group_pricing.php b/includes/modules/order_total/ot_group_pricing.php
+index 2c30dbdfe..d321b7959 100644
+--- a/includes/modules/order_total/ot_group_pricing.php
++++ b/includes/modules/order_total/ot_group_pricing.php
+@@ -154,6 +154,7 @@ function calculate_deductions($order_total) {
+       $discount = ($orderTotal['total'] - $gift_vouchers) * $group_discount->fields['group_percentage'] / 100;
+ //      echo "discout = $discount<br>";
+       $od_amount['total'] = round($discount, 2);
++      $od_amount['total'] = round(min($od_amount['total'], $order_total), 2);
+       $ratio = $od_amount['total']/$order_total;
+       /**
+        * when calculating the ratio add some insignificant values to stop divide by zero errors
+diff --git a/includes/modules/pages/account_history_info/header_php.php b/includes/modules/pages/account_history_info/header_php.php
+index 0b875668c..943348bcf 100644
+--- a/includes/modules/pages/account_history_info/header_php.php
++++ b/includes/modules/pages/account_history_info/header_php.php
+@@ -31,7 +31,7 @@
+ require DIR_WS_MODULES . zen_get_module_directory('require_languages.php');
+ $breadcrumb->add(NAVBAR_TITLE_1, zen_href_link(FILENAME_ACCOUNT, '', 'SSL'));
+ $breadcrumb->add(NAVBAR_TITLE_2, zen_href_link(FILENAME_ACCOUNT_HISTORY, '', 'SSL'));
+-$breadcrumb->add(sprintf(NAVBAR_TITLE_3, $_GET['order_id']));
++$breadcrumb->add(sprintf(NAVBAR_TITLE_3, (string)(int)$_GET['order_id']));
+ 
+ // This should be last line of the script:
+ $zco_notifier->notify('NOTIFY_HEADER_END_ACCOUNT_HISTORY_INFO');
+diff --git a/includes/modules/pages/contact_us/header_php.php b/includes/modules/pages/contact_us/header_php.php
+index 970916c91..4c528b65b 100644
+--- a/includes/modules/pages/contact_us/header_php.php
++++ b/includes/modules/pages/contact_us/header_php.php
+@@ -93,7 +93,7 @@
+             '------------------------------------------------------' . "\n\n" .
+             $extra_info['TEXT'];
+             // Prepare HTML-portion of message
+-            $html_msg['EMAIL_MESSAGE_HTML'] = $enquiry;
++            $html_msg['EMAIL_MESSAGE_HTML'] = zen_output_string_protected($enquiry);
+             $html_msg['CONTACT_US_OFFICE_FROM'] = OFFICE_FROM . ' ' . $name . '<br>' . OFFICE_EMAIL . '(' . $email_address . ')';
+             $html_msg['EXTRA_INFO'] = $extra_info['HTML'];
+             // Send message
+diff --git a/includes/modules/pages/gv_send/header_php.php b/includes/modules/pages/gv_send/header_php.php
+index ca3507f03..8d416aada 100644
+--- a/includes/modules/pages/gv_send/header_php.php
++++ b/includes/modules/pages/gv_send/header_php.php
+@@ -14,6 +14,7 @@
+ // This should be first line of the script:
+ $zco_notifier->notify('NOTIFY_HEADER_START_GV_SEND');
+ if (isset($_POST['message'])) $_POST['message'] = zen_output_string_protected($_POST['message']);
++if (isset($_POST['to_name'])) $_POST['to_name'] = zen_output_string_protected($_POST['to_name']);
+ 
+ require_once('includes/classes/http_client.php');
+ 
+diff --git a/includes/modules/pages/login/header_php.php b/includes/modules/pages/login/header_php.php
+index 8ab269766..db52ec711 100644
+--- a/includes/modules/pages/login/header_php.php
++++ b/includes/modules/pages/login/header_php.php
+@@ -103,9 +103,7 @@
+         // login and restore cart
+         $customer->login($login_attempt['customers_id'], $restore_cart = true);
+ 
+-        if (SESSION_RECREATE == 'True') {
+-          zen_session_recreate();
+-        }
++        zen_session_recreate();
+ 
+         $zco_notifier->notify('NOTIFY_LOGIN_SUCCESS');
+ 
+diff --git a/includes/modules/payment/paypal/paypal_admin_notification.php b/includes/modules/payment/paypal/paypal_admin_notification.php
+index a9ce69833..5584cbe7a 100644
+--- a/includes/modules/payment/paypal/paypal_admin_notification.php
++++ b/includes/modules/payment/paypal/paypal_admin_notification.php
+@@ -15,6 +15,10 @@
+     $ipn->fields[$key] = stripslashes($value ?? '');
+ }
+ 
++$esc = static function ($value): string {
++    return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE);
++};
++
+ // display all paypal status fields (in admin Orders page):
+           $output = '<table>'."\n";
+           $output .= '<tr style="background-color : #cccccc; border: 1px solid black;">'."\n";
+@@ -24,45 +28,45 @@
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_FIRST_NAME."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['first_name']."\n";
++          $output .= $esc($ipn->fields['first_name'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_LAST_NAME."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['last_name']."\n";
++          $output .= $esc($ipn->fields['last_name'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_BUSINESS_NAME."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payer_business_name']."\n";
++          $output .= $esc($ipn->fields['payer_business_name'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_NAME."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_name']."\n";
++          $output .= $esc($ipn->fields['address_name'])."\n";
+           $output .= '</td></tr>'."\n";
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STREET."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_street']."\n";
++          $output .= $esc($ipn->fields['address_street'])."\n";
+           $output .= '</td></tr>'."\n";
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_CITY."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_city']."\n";
++          $output .= $esc($ipn->fields['address_city'])."\n";
+           $output .= '</td></tr>'."\n";
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STATE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_state']."\n";
++          $output .= $esc($ipn->fields['address_state'])."\n";
+           $output .= '</td></tr>'."\n";
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_COUNTRY."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_country']."\n";
++          $output .= $esc($ipn->fields['address_country'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '</table></td>'."\n";
+@@ -72,49 +76,49 @@
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_EMAIL_ADDRESS."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payer_email']."\n";
++          $output .= $esc($ipn->fields['payer_email'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_EBAY_ID."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['ebay_address_id']."\n";
++          $output .= $esc($ipn->fields['ebay_address_id'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYER_ID."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payer_id']."\n";
++          $output .= $esc($ipn->fields['payer_id'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYER_STATUS."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payer_status']."\n";
++          $output .= $esc($ipn->fields['payer_status'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STATUS."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['address_status']."\n";
++          $output .= $esc($ipn->fields['address_status'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_TXN_TYPE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['txn_type']."\n";
++          $output .= $esc($ipn->fields['txn_type'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_TXN_ID."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= '<a href="https://www.paypal.com/us/cgi-bin/webscr?cmd=_view-a-trans&id=' . $ipn->fields['txn_id'] . '" rel="noopener" target="_blank">' . $ipn->fields['txn_id'] . '</a>' ."\n";
++          $output .= '<a href="https://www.paypal.com/us/cgi-bin/webscr?cmd=_view-a-trans&id=' . $esc($ipn->fields['txn_id']) . '" rel="noopener" target="_blank">' . $esc($ipn->fields['txn_id']) . '</a>' ."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PARENT_TXN_ID."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['parent_txn_id']."\n";
++          $output .= $esc($ipn->fields['parent_txn_id'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '</table></td>'."\n";
+@@ -124,31 +128,31 @@
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_TYPE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payment_type']."\n";
++          $output .= $esc($ipn->fields['payment_type'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_STATUS."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['payment_status']."\n";
++          $output .= $esc($ipn->fields['payment_status'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PENDING_REASON."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['pending_reason']."\n";
++          $output .= $esc($ipn->fields['pending_reason'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_INVOICE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['invoice']."\n";
++          $output .= $esc($ipn->fields['invoice'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_DATE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= zen_datetime_short($ipn->fields['payment_date'])."\n";
++          $output .= $esc(zen_datetime_short($ipn->fields['payment_date']))."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '</table></td>'."\n";
+@@ -158,31 +162,31 @@
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_CURRENCY."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['mc_currency']."\n";
++          $output .= $esc($ipn->fields['mc_currency'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_GROSS_AMOUNT."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['mc_gross']."\n";
++          $output .= $esc($ipn->fields['mc_gross'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_FEE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['mc_fee']."\n";
++          $output .= $esc($ipn->fields['mc_fee'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_EXCHANGE_RATE."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['exchange_rate']."\n";
++          $output .= $esc($ipn->fields['exchange_rate'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '<tr><td class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_CART_ITEMS."\n";
+           $output .= '</td><td class="main">'."\n";
+-          $output .= $ipn->fields['num_cart_items']."\n";
++          $output .= $esc($ipn->fields['num_cart_items'])."\n";
+           $output .= '</td></tr>'."\n";
+ 
+           $output .= '</table></td>'."\n";
+@@ -194,7 +198,7 @@
+           $output .= '<tr><td valign="top" class="main">'."\n";
+           $output .= MODULE_PAYMENT_PAYPAL_ENTRY_COMMENTS."\n";
+           $output .= '</td><td valign="top" class="main">'."\n";
+-          $output .= nl2br($ipn->fields['memo'])."\n";
++          $output .= nl2br($esc($ipn->fields['memo']), false)."\n";
+           $output .= '</td></tr>'."\n";
+           $output .= '</table></td>'."\n";
+         }
+diff --git a/includes/modules/payment/paypal/paypal_curl.php b/includes/modules/payment/paypal/paypal_curl.php
+index c2e64f42d..5e16b2a60 100644
+--- a/includes/modules/payment/paypal/paypal_curl.php
++++ b/includes/modules/payment/paypal/paypal_curl.php
+@@ -60,7 +60,8 @@ class paypal_curl extends base {
+                             CURLOPT_TIMEOUT => 45,
+                             CURLOPT_CONNECTTIMEOUT => 10,
+                             CURLOPT_FOLLOWLOCATION => FALSE,
+-                          //CURLOPT_SSL_VERIFYPEER => FALSE, // Leave this line commented out! This should never be set to FALSE on a live site!
++                            CURLOPT_SSL_VERIFYPEER => TRUE,
++                            CURLOPT_SSL_VERIFYHOST => 2,
+                           //CURLOPT_CAINFO => '/local/path/to/cacert.pem', // for offline testing, this file can be obtained from http://curl.haxx.se/docs/caextract.html ... should never be used in production!
+                             CURLOPT_FORBID_REUSE => TRUE,
+                             CURLOPT_FRESH_CONNECT => TRUE,
+@@ -457,19 +458,9 @@ function _request($values, $operation, $requestId = null) {
+     $commError = curl_error($ch);
+     $commErrNo = curl_errno($ch);
+ 
+-    if ($commErrNo == 35) {
+-      trigger_error('ALERT: Could not process PayPal transaction via normal CURL communications. Your server is encountering connection problems using TLS 1.2 ... because your hosting company cannot autonegotiate a secure protocol with modern security protocols. We will try the transaction again, but this is resulting in a very long delay for your customers, and could result in them attempting duplicate purchases. Get your hosting company to update their TLS capabilities ASAP.', E_USER_NOTICE);
+-      curl_setopt($ch, CURLOPT_SSLVERSION, 6); // Using the defined value of 6 instead of CURL_SSLVERSION_TLSv1_2 since these outdated hosts also don't properly implement this constant either.
+-      $response = curl_exec($ch);
+-      $commError = curl_error($ch);
+-      $commErrNo = curl_errno($ch);
+-    }
+-
+     $commInfo = @curl_getinfo($ch);
+     curl_close($ch);
+ 
+-    $rawdata = "CURL raw data:\n" . $response . "CURL RESULTS: (" . $commErrNo . ') ' . $commError . "\n" . print_r($commInfo, true) . "\nEOF";
+-
+     $errors = ($commErrNo != 0 ? "\n(" . $commErrNo . ') ' . $commError : '');
+     $response .= '&CURL_ERRORS=' . ($commErrNo != 0 ? urlencode('(' . $commErrNo . ') ' . $commError) : '') ;
+ 
+@@ -641,6 +632,9 @@ function _sanitizeLog($log, $allsensitive = false) {
+         switch (strtolower($key)) {
+           case 'pwd':
+           case 'cvv2':
++          case 'user':
++          case 'vendor':
++          case 'partner':
+             $log[$key] = str_repeat('*', strlen($log[$key]));
+             break;
+ 
+diff --git a/includes/modules/payment/paypal/paypal_currency_check.php b/includes/modules/payment/paypal/paypal_currency_check.php
+index b693c1c75..2b741d8b2 100644
+--- a/includes/modules/payment/paypal/paypal_currency_check.php
++++ b/includes/modules/payment/paypal/paypal_currency_check.php
+@@ -1,7 +1,8 @@
+ <?php
+ /* 
+  * function to check if below 10000 usd limit
+- * Returns true $amount if below the limit or the exchange rate cannot be found
++ * Returns true if the amount is below the limit; returns false if it is at/above the limit
++ * or the USD exchange rate cannot be determined
+  * 
+  * @copyright Copyright 2003-2023 Zen Cart Development Team
+  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+@@ -33,6 +34,11 @@ function paypalUSDCheck ($amount) : bool
+             }
+         }
+         
++        // in case the USD exchange rate could not be determined
++        if (empty($rate)) {
++            return false;
++        }
++
+         // Use the system CURRENCY_UPLIFT_RATIO to adjust the rate
+         $multiplier = (defined('CURRENCY_UPLIFT_RATIO') && (int) CURRENCY_UPLIFT_RATIO != 0) ? CURRENCY_UPLIFT_RATIO : 1;
+         
+diff --git a/includes/modules/payment/paypal/paypal_functions.php b/includes/modules/payment/paypal/paypal_functions.php
+index a7ae875ed..0352cfd0c 100644
+--- a/includes/modules/payment/paypal/paypal_functions.php
++++ b/includes/modules/payment/paypal/paypal_functions.php
+@@ -62,7 +62,7 @@ function ipn_get_stored_session($session_stuff) {
+             WHERE session_id = :sessionID";
+     $sql = $db->bindVars($sql, ':sessionID', $session_stuff[1], 'string');
+     $stored_session = $db->Execute($sql);
+-    if ($stored_session->recordCount() < 1) {
++    if ($stored_session->RecordCount() < 1) {
+       global $isECtransaction, $isDPtransaction;
+       if (isset($_POST['payment_type']) && $_POST['payment_type'] == 'instant' && $isDPtransaction && ((isset($_POST['auth_status']) && $_POST['auth_status'] == 'Completed') || $_POST['payment_status'] == 'Completed')) {
+         $session_stuff[1] = '(EC/DP transaction)';
+diff --git a/includes/modules/payment/paypal/paypalwpp_admin_notification.php b/includes/modules/payment/paypal/paypalwpp_admin_notification.php
+index 974849b1f..b2b62bf31 100644
+--- a/includes/modules/payment/paypal/paypalwpp_admin_notification.php
++++ b/includes/modules/payment/paypal/paypalwpp_admin_notification.php
+@@ -25,6 +25,10 @@
+     $ipn->fields[$key] = ($value === null ? '' : stripslashes($value));
+ }
+ 
++$esc = static function ($value): string {
++    return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE);
++};
++
+ if (!empty($response['RESPMSG'])) {
+     // these would be payflow transactions
+ 
+@@ -33,57 +37,57 @@
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_AUTHCODE."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['AUTHCODE'] ."\n";
++    $outputPFmain .= $esc($response['AUTHCODE']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_STATUS."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['RESPMSG'] ."\n";
++    $outputPFmain .= $esc($response['RESPMSG']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_AVSADDR."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['AVSADDR'] ."\n";
++    $outputPFmain .= $esc($response['AVSADDR']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_AVSZIP."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['AVSZIP'] ."\n";
++    $outputPFmain .= $esc($response['AVSZIP']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_CVV2MATCH."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['CVV2MATCH'] ."\n";
++    $outputPFmain .= $esc($response['CVV2MATCH']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_TXN_ID."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['ORIGPNREF'] ."\n";
++    $outputPFmain .= $esc($response['ORIGPNREF']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_DATE."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $ipn->fields['payment_date'] ."\n";
++    $outputPFmain .= $esc($ipn->fields['payment_date']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     $outputPFmain .= '<tr><td>'."\n";
+     $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_TRANSSTATE."\n";
+     $outputPFmain .= '</td><td>'."\n";
+-    $outputPFmain .= $response['TRANSSTATE'] ."\n";
++    $outputPFmain .= $esc($response['TRANSSTATE']) ."\n";
+     $outputPFmain .= '</td></tr>'."\n";
+ 
+     if (!empty($response['DAYS_TO_SETTLE'])) {
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_DAYSTOSETTLE."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $response['DAYS_TO_SETTLE'] ."\n";
++        $outputPFmain .= $esc($response['DAYS_TO_SETTLE']) ."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+     }
+     $outputPFmain .= '</table></td>'."\n\n";
+@@ -94,31 +98,31 @@
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_CURRENCY."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $ipn->fields['mc_currency'] ."\n";
++        $outputPFmain .= $esc($ipn->fields['mc_currency']) ."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+ 
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_GROSS_AMOUNT."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $ipn->fields['mc_gross']."\n";
++        $outputPFmain .= $esc($ipn->fields['mc_gross'])."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+ 
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_FEE."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $ipn->fields['mc_fee']."\n";
++        $outputPFmain .= $esc($ipn->fields['mc_fee'])."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+ 
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_EXCHANGE_RATE."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $ipn->fields['exchange_rate']."\n";
++        $outputPFmain .= $esc($ipn->fields['exchange_rate'])."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+ 
+         $outputPFmain .= '<tr><td>'."\n";
+         $outputPFmain .= MODULE_PAYMENT_PAYPAL_ENTRY_CART_ITEMS."\n";
+         $outputPFmain .= '</td><td>'."\n";
+-        $outputPFmain .= $ipn->fields['num_cart_items']."\n";
++        $outputPFmain .= $esc($ipn->fields['num_cart_items'])."\n";
+         $outputPFmain .= '</td></tr>'."\n";
+ 
+         $outputPFmain .= '</table></td>'."\n\n";
+@@ -130,20 +134,20 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_FIRST_NAME."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['FIRSTNAME']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['FIRSTNAME'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_LAST_NAME."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['LASTNAME']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['LASTNAME'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     if (!empty($response['BUSINESS'])) {
+         $outputPayPal .= '<tr><td>'."\n";
+         $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_BUSINESS_NAME."\n";
+         $outputPayPal .= '</td><td>'."\n";
+-        $outputPayPal .= urldecode($response['BUSINESS']) ."\n";
++        $outputPayPal .= $esc(urldecode($response['BUSINESS'])) ."\n";
+         $outputPayPal .= '</td></tr>'."\n";
+     }
+ 
+@@ -164,31 +168,31 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_NAME."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['SHIPTONAME']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['SHIPTONAME'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STREET."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['SHIPTOSTREET']) . ' ' . (!empty($response['SHIPTOSTREET2']) ? urldecode($response['SHIPTOSTREET2']) : '') ."\n";
++    $outputPayPal .= $esc(urldecode($response['SHIPTOSTREET'])) . ' ' . (!empty($response['SHIPTOSTREET2']) ? $esc(urldecode($response['SHIPTOSTREET2'])) : '') ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_CITY."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['SHIPTOCITY']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['SHIPTOCITY'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STATE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['SHIPTOSTATE']) . ' ' . urldecode($response['SHIPTOZIP']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['SHIPTOSTATE'])) . ' ' . $esc(urldecode($response['SHIPTOZIP'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_COUNTRY."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['SHIPTOCOUNTRYNAME']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['SHIPTOCOUNTRYNAME'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '</table></td>'."\n\n";
+@@ -198,57 +202,57 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_EMAIL_ADDRESS."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['EMAIL']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['EMAIL'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_EBAY_ID."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= (!empty($response['BUYERID']) ? urldecode($response['BUYERID']) : '') ."\n";
++    $outputPayPal .= (!empty($response['BUYERID']) ? $esc(urldecode($response['BUYERID'])) : '') ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYER_ID."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['PAYERID']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['PAYERID'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYER_STATUS."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['PAYERSTATUS']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['PAYERSTATUS'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_ADDRESS_STATUS."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['ADDRESSSTATUS']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['ADDRESSSTATUS'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_TXN_ID."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= '<a href="https://www.paypal.com/us/cgi-bin/webscr?cmd=_view-a-trans&amp;id=' . urldecode($response['TRANSACTIONID']) . '" rel="noopener" target="_blank">' . urldecode($response['TRANSACTIONID']) . '</a>' ."\n";
++    $outputPayPal .= '<a href="https://www.paypal.com/us/cgi-bin/webscr?cmd=_view-a-trans&amp;id=' . $esc(urldecode($response['TRANSACTIONID'])) . '" rel="noopener" target="_blank">' . $esc(urldecode($response['TRANSACTIONID'])) . '</a>' ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PARENT_TXN_ID."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= (!empty($response['PARENTTRANSACTIONID']) ? urldecode($response['PARENTTRANSACTIONID']) : '') ."\n";
++    $outputPayPal .= (!empty($response['PARENTTRANSACTIONID']) ? $esc(urldecode($response['PARENTTRANSACTIONID'])) : '') ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     if (defined('MODULE_PAYMENT_PAYPALWPP_ENTRY_PROTECTIONELIG') && !empty($response['PROTECTIONELIGIBILITY'])) {
+         $outputPayPal .= '<tr><td>'."\n";
+         $outputPayPal .= MODULE_PAYMENT_PAYPALWPP_ENTRY_PROTECTIONELIG."\n";
+         $outputPayPal .= '</td><td>'."\n";
+-        $outputPayPal .= $response['PROTECTIONELIGIBILITY']."\n";
++        $outputPayPal .= $esc($response['PROTECTIONELIGIBILITY'])."\n";
+         $outputPayPal .= '</td></tr>'."\n";
+     }
+     if (defined('MODULE_PAYMENT_PAYPAL_ENTRY_COMMENTS') && $ipn->fields['memo'] != '') {
+         $outputPayPal .= '<tr><td>'."\n";
+         $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_COMMENTS."\n";
+         $outputPayPal .= '</td><td>'."\n";
+-        $outputPayPal .= $ipn->fields['memo']."\n";
++        $outputPayPal .= $esc($ipn->fields['memo'])."\n";
+         $outputPayPal .= '</td></tr>'."\n";
+     }
+ 
+@@ -259,37 +263,37 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_TXN_TYPE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['TRANSACTIONTYPE']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['TRANSACTIONTYPE'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_TYPE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['PAYMENTTYPE']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['PAYMENTTYPE'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_STATUS."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['PAYMENTSTATUS']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['PAYMENTSTATUS'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PENDING_REASON."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['PENDINGREASON']) . ($response['REASONCODE'] == 'None' ? '' : urldecode($response['PENDINGREASON'])) ."\n";
++    $outputPayPal .= $esc(urldecode($response['PENDINGREASON'])) . ($response['REASONCODE'] == 'None' ? '' : $esc(urldecode($response['PENDINGREASON']))) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_INVOICE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($ipn->fields['invoice']) . (urldecode($ipn->fields['invoice']) != urldecode($response['INVNUM']) ? '<br>' . urldecode($response['INVNUM']) : '') ."\n";
++    $outputPayPal .= $esc(urldecode($ipn->fields['invoice'])) . (urldecode($ipn->fields['invoice']) != urldecode($response['INVNUM']) ? '<br>' . $esc(urldecode($response['INVNUM'])) : '') ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_DATE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['ORDERTIME']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['ORDERTIME'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '</table></td>'."\n\n";
+@@ -299,9 +303,9 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_CURRENCY."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= $ipn->fields['mc_currency']."\n";
++    $outputPayPal .= $esc($ipn->fields['mc_currency'])."\n";
+     if ($ipn->fields['mc_currency'] !== urldecode($response['CURRENCYCODE'])) {
+-        $outputPayPal .= ' ' . urldecode($response['CURRENCYCODE']);
++        $outputPayPal .= ' ' . $esc(urldecode($response['CURRENCYCODE']));
+     }
+     $outputPayPal .= "\n";
+     $outputPayPal .= '</td></tr>'."\n";
+@@ -309,25 +313,25 @@
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_GROSS_AMOUNT."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['AMT']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['AMT'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_PAYMENT_FEE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= urldecode($response['FEEAMT']) ."\n";
++    $outputPayPal .= $esc(urldecode($response['FEEAMT'])) ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_EXCHANGE_RATE."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= (!empty($response['EXCHANGERATE']) ? urldecode($response['EXCHANGERATE']) : '') ."\n";
++    $outputPayPal .= (!empty($response['EXCHANGERATE']) ? $esc(urldecode($response['EXCHANGERATE'])) : '') ."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '<tr><td>'."\n";
+     $outputPayPal .= MODULE_PAYMENT_PAYPAL_ENTRY_CART_ITEMS."\n";
+     $outputPayPal .= '</td><td>'."\n";
+-    $outputPayPal .= $ipn->fields['num_cart_items']."\n";
++    $outputPayPal .= $esc($ipn->fields['num_cart_items'])."\n";
+     $outputPayPal .= '</td></tr>'."\n";
+ 
+     $outputPayPal .= '</table></td>'."\n\n";
+diff --git a/includes/modules/payment/paypaldp.php b/includes/modules/payment/paypaldp.php
+index 0dffb6332..fab712598 100644
+--- a/includes/modules/payment/paypaldp.php
++++ b/includes/modules/payment/paypaldp.php
+@@ -244,6 +244,12 @@ class paypaldp extends base {
+      * @var string
+      */
+      public  $transactiontype;
++
++    /**
++     * A copy of MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY, so that the constant's
++     * availability can be registered.
++     */
++     protected ?string $merchant_country;
+   /**
+    * class constructor
+    */
+@@ -254,11 +260,12 @@ function __construct() {
+     $this->codeVersion = '1.5.8';
+     $this->enableDirectPayment = true;
+     $this->enabled = (defined('MODULE_PAYMENT_PAYPALDP_STATUS') && (MODULE_PAYMENT_PAYPALDP_STATUS === 'True' || (IS_ADMIN_FLAG === true && MODULE_PAYMENT_PAYPALDP_STATUS === 'Retired')));
++    $this->merchant_country = (defined('MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY')) ? MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY : null;
+     // Set the title & description text based on the mode we're in
+     if (IS_ADMIN_FLAG === true) {
+       $this->description = sprintf(MODULE_PAYMENT_PAYPALDP_TEXT_ADMIN_DESCRIPTION, ' (rev' . $this->codeVersion . ')');
+ 
+-      $merchant_country = (defined('MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY')) ? MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY : null;
++      $merchant_country = $this->merchant_country;
+       $country = $merchant_country ?? STORE_COUNTRY;
+       $this->title = $country == '223' || $country == 'USA' ? MODULE_PAYMENT_PAYPALDP_TEXT_ADMIN_TITLE_WPP : MODULE_PAYMENT_PAYPALDP_TEXT_ADMIN_TITLE_NONUSA;
+       $this->title .= ($merchant_country !== null) ? " ($merchant_country)" : '';
+@@ -284,7 +291,7 @@ function __construct() {
+     $this->enableDebugging = (MODULE_PAYMENT_PAYPALDP_DEBUGGING == 'Log File' || MODULE_PAYMENT_PAYPALDP_DEBUGGING =='Log and Email');
+     $this->emailAlerts = (MODULE_PAYMENT_PAYPALDP_DEBUGGING == 'Log File' || MODULE_PAYMENT_PAYPALDP_DEBUGGING =='Log and Email' || MODULE_PAYMENT_PAYPALDP_DEBUGGING == 'Alerts Only');
+ 
+-    $this->buttonSource = (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK') ? 'ZenCart-DP_uk' : 'ZenCart-DP_us';
++    $this->buttonSource = ($this->merchant_country == 'UK') ? 'ZenCart-DP_uk' : 'ZenCart-DP_us';
+ 
+     $this->order_pending_status = MODULE_PAYMENT_PAYPALDP_ORDER_PENDING_STATUS_ID;
+     if ((int)MODULE_PAYMENT_PAYPALDP_ORDER_STATUS_ID > 0) {
+@@ -296,7 +303,7 @@ function __construct() {
+ 
+     // offer credit card choices for pull-down menu -- only needed for UK version
+     $this->cards = array();
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK') {
++    if ($this->merchant_country == 'UK') {
+       if (CC_ENABLED_VISA=='1')    $this->cards[] = array('id' => 'Visa', 'text' => 'Visa');
+       if (CC_ENABLED_MC=='1')      $this->cards[] = array('id' => 'MasterCard', 'text' => 'MasterCard');
+       if (CC_ENABLED_MAESTRO=='1') $this->cards[] = array('id' => 'Maestro', 'text' => 'Maestro');
+@@ -309,7 +316,7 @@ function __construct() {
+     // the PayFlow-UK mode is currently in use, that class variable is 'reset' to enable the 3DS handling
+     // to proceed without issue.
+     //
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY === 'UK' || (MODULE_PAYMENT_PAYPALWPP_PFVENDOR !== '' && MODULE_PAYMENT_PAYPALWPP_PFPASSWORD !== '')) {
++    if ($this->merchant_country === 'UK' || (MODULE_PAYMENT_PAYPALWPP_PFVENDOR !== '' && MODULE_PAYMENT_PAYPALWPP_PFPASSWORD !== '')) {
+       $this->collectsCardDataOnsite = false;
+     }
+ 
+@@ -470,7 +477,7 @@ function selection() {
+                        'module' => MODULE_PAYMENT_PAYPALDP_TEXT_TITLE,
+                        'fields' => $fieldsArray);
+ 
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' && (CC_ENABLED_MAESTRO=='1' || CC_ENABLED_SOLO=='1')) {
++    if ($this->merchant_country == 'UK' && (CC_ENABLED_MAESTRO=='1' || CC_ENABLED_SOLO=='1')) {
+       // add extra fields for UK cards
+       for ($i = $today['year'] - 10; $i <= $today['year']; $i++) {
+         $issue_year[] = array('id' => $zcDate->output('%y', mktime(0,0,0,1,1,$i)), 'text' => $zcDate->output('%Y', mktime(0,0,0,1,1,$i)));
+@@ -540,6 +547,7 @@ function pre_confirmation_check() {
+     $this->cc_expiry_month = $cc_validation->cc_expiry_month;
+     $this->cc_expiry_year = $cc_validation->cc_expiry_year;
+     $this->cc_checkcode = $_POST['paypalwpp_cc_checkcode'];
++    $_SESSION['paypaldp_cc_checkcode'] = $_POST['paypalwpp_cc_checkcode'];
+ 
+ 
+     // In the case of UK cards, hook 3D-Secure if appropriate
+@@ -559,7 +567,7 @@ function pre_confirmation_check() {
+      * transactions using credit and debit cards that are unable to be
+      * authenticated to complete and proceed with authorization.
+      */
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' && (!isset($_POST['MD']))) {
++    if ($this->merchant_country == 'UK' && (!isset($_POST['MD']))) {
+       if (isset($_SESSION['3Dsecure_auth_status']) && isset($_SESSION['3Dsecure_auth_xid']) && isset($_SESSION['3Dsecure_auth_cavv']) && isset($_SESSION['3Dsecure_auth_eci'])) {
+         // at this point we have 3d-secure auth data
+       } else {
+@@ -673,9 +681,9 @@ function confirmation() {
+     global $zcDate;
+     $confirmation = array('title' => '',
+                           'fields' => array(array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_CREDIT_CARD_FIRSTNAME,
+-                                                  'field' => $_POST['paypalwpp_cc_firstname']),
++                                                  'field' => zen_output_string_protected($_POST['paypalwpp_cc_firstname'])),
+                                             array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_CREDIT_CARD_LASTNAME,
+-                                                  'field' => $_POST['paypalwpp_cc_lastname']),
++                                                  'field' => zen_output_string_protected($_POST['paypalwpp_cc_lastname'])),
+                                             array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_CREDIT_CARD_TYPE,
+                                                   'field' => $this->cc_card_type),
+                                             array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_CREDIT_CARD_NUMBER,
+@@ -683,10 +691,10 @@ function confirmation() {
+                                             array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_CREDIT_CARD_EXPIRES,
+                                                   'field' => $zcDate->output('%B, %Y', mktime(0,0,0,$_POST['paypalwpp_cc_expires_month'], 1, '20' . $_POST['paypalwpp_cc_expires_year'])),
+                                             (isset($_POST['paypalwpp_cc_issuenumber']) ? array('title' => MODULE_PAYMENT_PAYPALDP_TEXT_ISSUE_NUMBER,
+-                                                  'field' => $_POST['paypalwpp_cc_issuenumber']) : '')
++                                                  'field' => zen_output_string_protected($_POST['paypalwpp_cc_issuenumber'])) : ''),
+                                             )));
+     // 3D-Secure
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' && $this->requiresLookup($_POST['paypalwpp_cc_number']) == true) {
++    if ($this->merchant_country == 'UK' && $this->requiresLookup($_POST['paypalwpp_cc_number']) == true) {
+           $confirmation['fields'][count($confirmation['fields'])] = array(
+               'title' => '',
+               'field' => '<div id="' . $this->code.'-cc-securetext"><p>' .
+@@ -705,20 +713,22 @@ function process_button() {
+     global $order;
+     $_SESSION['paypal_ec_markflow'] = 1;
+     $process_button_string = '';
+-    $process_button_string .= "\n" . zen_draw_hidden_field('wpp_cc_type', $_POST['paypalwpp_cc_type'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_expdate_month', $_POST['paypalwpp_cc_expires_month'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_expdate_year', $_POST['paypalwpp_cc_expires_year'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_issuedate_month', $_POST['paypalwpp_cc_issue_month'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_issuedate_year', $_POST['paypalwpp_cc_issue_year'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_issuenumber', $_POST['paypalwpp_cc_issuenumber'] ?? '') . "\n" .
+-        zen_draw_hidden_field('wpp_cc_number', $_POST['paypalwpp_cc_number']) . "\n" .
+-        zen_draw_hidden_field('wpp_cc_checkcode', $_POST['paypalwpp_cc_checkcode']) . "\n" .
+-        zen_draw_hidden_field('wpp_payer_firstname', $_POST['paypalwpp_cc_firstname']) . "\n" .
+-        zen_draw_hidden_field('wpp_payer_lastname', $_POST['paypalwpp_cc_lastname']) . "\n";
++    if (empty($this->collectsCardDataOnsite)) {
++      $process_button_string .= "\n" . zen_draw_hidden_field('wpp_cc_type', $_POST['paypalwpp_cc_type'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_expdate_month', $_POST['paypalwpp_cc_expires_month'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_expdate_year', $_POST['paypalwpp_cc_expires_year'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_issuedate_month', $_POST['paypalwpp_cc_issue_month'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_issuedate_year', $_POST['paypalwpp_cc_issue_year'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_issuenumber', $_POST['paypalwpp_cc_issuenumber'] ?? '') . "\n" .
++          zen_draw_hidden_field('wpp_cc_number', $_POST['paypalwpp_cc_number']) . "\n" .
++          zen_draw_hidden_field('wpp_payer_firstname', $_POST['paypalwpp_cc_firstname']) . "\n" .
++          zen_draw_hidden_field('wpp_payer_lastname', $_POST['paypalwpp_cc_lastname']) . "\n";
++    }
+     $process_button_string .= zen_draw_hidden_field(zen_session_name(), zen_session_id());
+     return $process_button_string;
+   }
+   function process_button_ajax() {
++    $_SESSION['paypaldp_ajax_relay'] = true;
+     $processButton = array('ccFields'=>array('wpp_cc_type'=>'paypalwpp_cc_type',
+         'wpp_cc_expdate_month'=>'paypalwpp_cc_expires_month',
+         'wpp_cc_expdate_year'=>'paypalwpp_cc_expires_year',
+@@ -726,7 +736,7 @@ function process_button_ajax() {
+         'wpp_cc_issuedate_year'=>'paypalwpp_cc_issue_year',
+         'wpp_cc_issuenumber'=>'paypalwpp_cc_issuenumber',
+         'wpp_cc_number'=>'paypalwpp_cc_number',
+-        'wpp_cc_checkcode'=>'paypalwpp_cc_checkcode',
++        // wpp_cc_checkcode is deliberately excluded here
+         'wpp_payer_firstname'=>'paypalwpp_cc_firstname',
+         'wpp_payer_lastname'=>'paypalwpp_cc_lastname',
+     ), 'extraFields'=>array(zen_session_name()=>zen_session_id()));
+@@ -737,6 +747,14 @@ function process_button_ajax() {
+    */
+   function before_process() {
+     global $order, $doPayPal, $messageStack;
++    $cameFromAjaxRelay = !empty($_SESSION['paypaldp_ajax_relay']);
++    unset($_SESSION['paypaldp_ajax_relay']);
++    if (!empty($this->collectsCardDataOnsite) && $cameFromAjaxRelay === false) {
++      unset($_SESSION['paypaldp_cc_checkcode']);
++      $messageStack->add_session('checkout_payment', MODULE_PAYMENT_PAYPALDP_CANNOT_BE_COMPLETED . '<!-- [' . $this->code . '] onsite-relay-required -->', 'error');
++      zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true, false));
++    }
++
+     $options = array();
+     $optionsShip = array();
+     $optionsNVP = array();
+@@ -795,7 +813,7 @@ function before_process() {
+       $cc_number = $cc_validation->cc_number;
+       $cc_first_name = ($_POST['wpp_payer_firstname'] != '' ? $_POST['wpp_payer_firstname'] : $_SESSION['customer_first_name']);
+       $cc_last_name = ($_POST['wpp_payer_lastname'] != '' ? $_POST['wpp_payer_lastname'] : $_SESSION['customer_last_name']);
+-      $cc_checkcode = $_POST['wpp_cc_checkcode'];
++      $cc_checkcode = $_SESSION['paypaldp_cc_checkcode'] ?? '';
+       $cc_expdate_month = $cc_validation->cc_expiry_month;
+       $cc_expdate_year = $cc_validation->cc_expiry_year;
+       $cc_issuedate_month = $_POST['wpp_cc_issuedate_month'];
+@@ -824,7 +842,7 @@ function before_process() {
+ 
+ 
+       // 3D-Secure
+-      if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK') {
++      if ($this->merchant_country == 'UK') {
+         // determine the card type and validate that authentication was attempted and completed if applicable
+         if (($_SESSION['3Dsecure_requires_lookup'] || $this->requiresLookup($_POST['wpp_cc_number']) == true)) {  // authentication attempt required?
+             $secureflags = [];
+@@ -936,7 +954,7 @@ function before_process() {
+ //       $optionsAll['SOFTDESCRIPTOR'] = substr(preg_replace('/[^a-zA-Z0-9. ]/', '', STORE_NAME), 0, 23);
+ //       $optionsAll['SOFTDESCRIPTORCITY'] = substr(preg_replace('/[^a-zA-Z0-9. !,' . preg_quote('"$%&\'()+-*/:;<=>?@') . ']/', '', STORE_TELEPHONE_CUSTSERVICE), 0, 23);
+ 
+-      if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' || (MODULE_PAYMENT_PAYPALWPP_PFVENDOR != '' && MODULE_PAYMENT_PAYPALWPP_PFPASSWORD != '')) { // Payflow params required
++      if ($this->merchant_country == 'UK' || (MODULE_PAYMENT_PAYPALWPP_PFVENDOR != '' && MODULE_PAYMENT_PAYPALWPP_PFPASSWORD != '')) { // Payflow params required
+         if (isset($optionsAll['COUNTRYCODE'])) {
+           $optionsAll['COUNTRY'] = $optionsAll['COUNTRYCODE'];
+           unset($optionsAll['COUNTRYCODE']);
+@@ -959,6 +977,8 @@ function before_process() {
+                                            $cc_type,
+                                            $optionsAll, array_merge($optionsNVP, $optionsShip));
+ 
++      unset($_SESSION['paypaldp_cc_checkcode']);
++
+       $this->zcLog('before_process - DP-5', 'resultset:' . "\n" . urldecode(print_r($response, true)));
+ 
+       // CHECK RESPONSE
+@@ -1040,7 +1060,7 @@ function after_process() {
+     $paypal_order = array('order_id' => $insert_id,
+                           'txn_type' => $this->transactiontype,
+                           'module_name' => $this->code,
+-                          'module_mode' => MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY,
++                          'module_mode' => (string)$this->merchant_country,
+                           'reason_code' => $this->reasoncode,
+                           'payment_type' => $this->payment_type,
+                           'payment_status' => $this->payment_status,
+@@ -1165,7 +1185,7 @@ function _TransactionSearch($startDate = '', $oID = '', $criteria = '') {
+     /**
+      * Read data from PayPal
+      */
+-    $response = $doPayPal->TransactionSearch($startDate, $txnID, $email, $criteria);
++    $response = $doPayPal->TransactionSearch($startDate, $txnID, $email ?? '', $criteria);
+ 
+     $error = $this->_errorHandler($response, 'TransactionSearch');
+     if ($error === false) {
+@@ -1291,7 +1311,7 @@ function _doDebug($subject = 'PayPal debug data', $data = '', $useSession = true
+   function paypal_init() {
+     $nvp = (MODULE_PAYMENT_PAYPALWPP_APIPASSWORD != '' && MODULE_PAYMENT_PAYPALWPP_APISIGNATURE != '') ? true : false;
+     $ec = ($nvp && isset($_GET['type']) && $_GET['type'] == 'ec') ? true : false;
+-    if (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' && !$ec) {
++    if ($this->merchant_country == 'UK' && !$ec) {
+       $doPayPal = new paypal_curl(array('mode' => 'payflow',
+                                         'user' =>   trim(MODULE_PAYMENT_PAYPALWPP_PFUSER),
+                                         'vendor' => trim(MODULE_PAYMENT_PAYPALWPP_PFVENDOR),
+@@ -1506,7 +1526,7 @@ function selectCurrency($val = '') {
+     $dpus_currencies = array('CAD', 'EUR', 'GBP', 'JPY', 'USD', 'AUD');
+ 
+     // in USA, only 6 currencies are supported. But UK and Canada support 16 currencies (as of Jan 2011):
+-    $paypalSupportedCurrencies = (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK' || MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'Canada') ? $dp_currencies : $dpus_currencies;
++    $paypalSupportedCurrencies = ($this->merchant_country == 'UK' || $this->merchant_country == 'Canada') ? $dp_currencies : $dpus_currencies;
+ 
+     $my_currency = substr(MODULE_PAYMENT_PAYPALDP_CURRENCY, 5);
+     if (MODULE_PAYMENT_PAYPALDP_CURRENCY == 'Selected Currency') {
+@@ -1514,7 +1534,7 @@ function selectCurrency($val = '') {
+     }
+ 
+     if (!in_array($my_currency, $paypalSupportedCurrencies)) {
+-      $my_currency = (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'UK') ? 'GBP' : (MODULE_PAYMENT_PAYPALDP_MERCHANT_COUNTRY == 'Canada' ? 'CAD' : 'USD');
++      $my_currency = ($this->merchant_country == 'UK') ? 'GBP' : ($this->merchant_country == 'Canada' ? 'CAD' : 'USD');
+     }
+     return $my_currency;
+   }
+@@ -1982,7 +2002,7 @@ function _errorHandler($response, $operation = '', $ignore_codes = '') {
+            ((isset($_SESSION['paypal_ec_token']) && isset($response['TOKEN'])) && $_SESSION['paypal_ec_token'] != urldecode($response['TOKEN'])) ) {
+             // Error, so send the store owner a complete dump of the transaction.
+           if ($this->enableDebugging) {
+-            $this->_doDebug('PayPal Error Log - before_process() - DP', "In function: before_process() - Direct Payment \r\nDid first contact attempt return error? " . ($error_occurred ? "Yes" : "No") . " \r\n\r\nValue List:\r\n" . str_replace('&',"\r\n", urldecode($doPayPal->_sanitizeLog($doPayPal->_parseNameValueList($doPayPal->lastParamList)))) . "\r\n\r\nResponse:\r\n" . urldecode(print_r($response, true)));
++            $this->_doDebug('PayPal Error Log - before_process() - DP', "In function: before_process() - Direct Payment \r\n\r\nValue List:\r\n" . str_replace('&',"\r\n", urldecode($doPayPal->_sanitizeLog($doPayPal->_parseNameValueList($doPayPal->lastParamList)))) . "\r\n\r\nResponse:\r\n" . urldecode(print_r($response, true)));
+           }
+           $errorText = MODULE_PAYMENT_PAYPALDP_INVALID_RESPONSE;
+           $errorNum = urldecode($response['L_ERRORCODE0'] . ' ' . ($response['RESULT'] ?? '') . ' <!-- ' . ($response['RESPMSG'] ?? '') . ' -->');
+@@ -2118,7 +2138,7 @@ function _errorHandler($response, $operation = '', $ignore_codes = '') {
+             $this->_doDebug('PayPal Error Log - ' . $operation, "Value List:\r\n" . str_replace('&',"\r\n", $doPayPal->_sanitizeLog($doPayPal->_parseNameValueList($doPayPal->lastParamList))) . "\r\n\r\nResponse:\r\n" . print_r($response, true));
+           }
+           $errorText = MODULE_PAYMENT_PAYPALDP_TEXT_GEN_API_ERROR;
+-          $errorNum .= ' (' . urldecode($response['L_SHORTMESSAGE0'] . ' <!-- ' . $response['RESPMSG']) . ' -->) ' . $response['L_ERRORCODE0'];
++          $errorNum = ' (' . urldecode($response['L_SHORTMESSAGE0'] . ' <!-- ' . $response['RESPMSG']) . ' -->) ' . $response['L_ERRORCODE0'];
+           $detailedMessage = ($errorText == MODULE_PAYMENT_PAYPALDP_TEXT_GEN_API_ERROR || $errorText == MODULE_PAYMENT_PAYPALDP_TEXT_DECLINED || $this->enableDebugging || $response['CURL_ERRORS'] != '' || $this->emailAlerts) ? urldecode(' ' . $response['L_SHORTMESSAGE0'] . ' - ' . $response['L_LONGMESSAGE0'] . ' ' . $response['CURL_ERRORS']) : '';
+           $explain = "\n\nProblem occurred while customer #" . $_SESSION['customer_id'] . ' -- ' . $_SESSION['customer_first_name'] . ' ' . $_SESSION['customer_last_name'] . ' -- was attempting checkout.' . "\n";
+           $detailedEmailMessage = ($detailedMessage == '') ? '' : MODULE_PAYMENT_PAYPALDP_TEXT_EMAIL_ERROR_MESSAGE . ' ' . $response['RESPMSG'] . urldecode($response['L_ERRORCODE0'] . "\n" . $response['L_SHORTMESSAGE0'] . "\n" . $response['L_LONGMESSAGE0'] . $response['L_ERRORCODE1'] . "\n" . $response['L_SHORTMESSAGE1'] . "\n" . $response['L_LONGMESSAGE1'] . $response['L_ERRORCODE2'] . "\n" . $response['L_SHORTMESSAGE2'] . "\n" . $response['L_LONGMESSAGE2'] . ($response['CURL_ERRORS'] != '' ? "\n" . $response['CURL_ERRORS'] : '') . "\n\n" . 'Zen Cart message: ' . $detailedMessage . "\n\n" . $errorInfo . "\n\n" . 'Transaction Response Details: ' . print_r($response, true) . "\n\n" . 'Transaction Submission: ' . urldecode($doPayPal->_sanitizeLog($doPayPal->_parseNameValueList($doPayPal->lastParamList), true)));
+@@ -2308,7 +2328,8 @@ function get3DSecureLookupResponse($lookup_data_array) {
+     $responseString = $this->send3DSecureHttp(MODULE_PAYMENT_PAYPALDP_CARDINAL_TXN_URL, $data, $debugData);
+ 
+     if (MODULE_PAYMENT_CARDINAL_CENTINEL_DEBUGGING !== FALSE) {
+-      $this->zcLog('Cardinal Lookup 2', '[' . zen_session_id() . '] Cardinal Centinel - cmpi_lookup response - ' . $responseString);
++      $responseDebug = preg_replace('#<(CardNumber|CardCode|Cvv)>.*?</\1>#is', '<$1>********</$1>', (string)$responseString);
++      $this->zcLog('Cardinal Lookup 2', '[' . zen_session_id() . '] Cardinal Centinel - cmpi_lookup response - ' . $responseDebug);
+     }
+ 
+     // parse the XML
+@@ -2401,7 +2422,8 @@ function get3DSecureAuthenticateResponse($authenticate_data_array) {
+     $responseString = $this->send3DSecureHttp(MODULE_PAYMENT_PAYPALDP_CARDINAL_TXN_URL, $data, $debugData);
+ 
+     if (MODULE_PAYMENT_CARDINAL_CENTINEL_DEBUGGING !== FALSE) {
+-      $this->zcLog('Cardinal Auth 2', '[' . zen_session_id() . '] Cardinal Centinel - cmpi_authenticate response - ' . $responseString);
++      $responseDebug = preg_replace('#<(CardNumber|CardCode|Cvv)>.*?</\1>#is', '<$1>********</$1>', (string)$responseString);
++      $this->zcLog('Cardinal Auth 2', '[' . zen_session_id() . '] Cardinal Centinel - cmpi_authenticate response - ' . $responseDebug);
+     }
+ 
+     // parse the XML
+@@ -2709,7 +2731,7 @@ function determineCardType($cardNumber) {
+ class CardinalXMLParser{
+ 
+   var $xml_parser;
+-  var $deseralizedResponse;
++  var $deserializedResponse;
+   var $elementName;
+   var $elementValue;
+ 
+diff --git a/ipn_main_handler.php b/ipn_main_handler.php
+index 7bc6e7bcf..062ba48d8 100644
+--- a/ipn_main_handler.php
++++ b/ipn_main_handler.php
+@@ -170,10 +170,8 @@
+      * validate transaction -- email address, matching txn record, etc
+      */
+     if (!ipn_validate_transaction($info, $_POST, 'IPN') === true) {
+-        if (!$isECtransaction && $posted_txn_type !== '') {
+-            ipn_debug_email('IPN FATAL ERROR :: Transaction did not validate. ABORTED.');
+-            die();
+-        }
++        ipn_debug_email('IPN FATAL ERROR :: Transaction did not validate. ABORTED.');
++        die();
+     }
+ 
+     if ($isDPtransaction) {
+@@ -491,7 +489,8 @@
+                 $paypalipnID = $db->Insert_ID();
+             } else {
+                 $sql_data_array = ipn_create_order_update_array($txn_type);
+-                zen_db_perform(TABLE_PAYPAL, $sql_data_array, 'update', "txn_id='" . ($txn_type === 'cleared-authorization' ? $_POST['parent_txn_id'] : $_POST['txn_id']) . "'");
++                $txnWhereValue = ($txn_type === 'cleared-authorization' ? $_POST['parent_txn_id'] : $_POST['txn_id']);
++                zen_db_perform(TABLE_PAYPAL, $sql_data_array, 'update', $db->bindVars('txn_id=:txn_id:', ':txn_id:', $txnWhereValue, 'string'));
+                 $sql = "SELECT paypal_ipn_id FROM " . TABLE_PAYPAL . " WHERE txn_id=:txn:";
+                 $sql = $db->bindVars($sql, ':txn:', $_POST['txn_id'], 'string');
+                 $result = $db->Execute($sql, 1);
+@@ -581,4 +580,3 @@
+             break;
+     }
+ }
+-
+diff --git a/zc_plugins/DisplayLogs/v3.0.1/admin/display_logs.php b/zc_plugins/DisplayLogs/v3.0.1/admin/display_logs.php
+index 3ed8a7526..9f542ec14 100644
+--- a/zc_plugins/DisplayLogs/v3.0.1/admin/display_logs.php
++++ b/zc_plugins/DisplayLogs/v3.0.1/admin/display_logs.php
+@@ -4,6 +4,9 @@
+ //
+ // Copyright (c) 2012-2020, Vinos de Frutas Tropicales (lat9)
+ //
++if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
++    exit('Invalid Access');
++}
+ 
+ // -----
+ // Functions that gather the log-related files and provide the ascending/descending sort thereof.
+@@ -34,6 +37,15 @@ function sortLogSizeDesc($a, $b)
+ //
+ require 'includes/application_top.php';
+ 
++// -----
++// If the current admin isn't a superuser, redirect to the "denied" page
++// and note the occurrence in the admin activity log.
++//
++if (!zen_is_superuser()) {
++    zen_record_admin_activity('Attempted access to unauthorized page [display_logs]. Redirected to DENIED page instead.', 'notice');
++    zen_redirect(zen_href_link(FILENAME_DENIED, '', 'SSL'));
++}
++
+ // -----
+ // If debug-logs-only has been selected, display only those files.  If multiple file prefixes are
+ // to be either included or excluded, wrap that value with parenthese to make preg_match "happy".
+diff --git a/zc_plugins/DisplayLogs/v3.0.2/admin/display_logs.php b/zc_plugins/DisplayLogs/v3.0.2/admin/display_logs.php
+index 32473dc93..bcd4802fd 100644
+--- a/zc_plugins/DisplayLogs/v3.0.2/admin/display_logs.php
++++ b/zc_plugins/DisplayLogs/v3.0.2/admin/display_logs.php
+@@ -4,6 +4,9 @@
+ //
+ // Copyright (c) 2012-2020, Vinos de Frutas Tropicales (lat9)
+ //
++if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
++    exit('Invalid Access');
++}
+ 
+ // -----
+ // Functions that gather the log-related files and provide the ascending/descending sort thereof.
+@@ -34,6 +37,15 @@ function sortLogSizeDesc($a, $b)
+ //
+ require 'includes/application_top.php';
+ 
++// -----
++// If the current admin isn't a superuser, redirect to the "denied" page
++// and note the occurrence in the admin activity log.
++//
++if (!zen_is_superuser()) {
++    zen_record_admin_activity('Attempted access to unauthorized page [display_logs]. Redirected to DENIED page instead.', 'notice');
++    zen_redirect(zen_href_link(FILENAME_DENIED, '', 'SSL'));
++}
++
+ // -----
+ // If debug-logs-only has been selected, display only those files.  If multiple file prefixes are
+ // to be either included or excluded, wrap that value with parenthese to make preg_match "happy".
+diff --git a/includes/routing_map.php b/includes/routing_map.php
+new file mode 100644
+index 000000000..c4c5d90d0
+--- /dev/null
++++ b/includes/routing_map.php
+@@ -0,0 +1,95 @@
++<?php
++/**
++ * Routing-map check used by the very early request-inoculation block in
++ * application_top.php, before the framework, database, session, or FILENAME_*
++ * constants are available. Because of that, this file is deliberately
++ * self-contained: no zen_* helper calls, no constants, just plain PHP.
++ *
++ * The idea: a small, fixed set of GET params only ever have meaning on catalog
++ * "listing" pages (index, search results, specials, etc.). A request supplying
++ * one of those params for a page that's guaranteed to never legitimately use them
++ * is either a stale/spoofed link or a bot probing arbitrary URL/param combinations,
++ * and can be rejected immediately (406) before a session starts or any other
++ * bootstrapping occurs.
++ *
++ * This is a deny-list of known-bad targets, not an allow-list of known-good pages.
++ * That's deliberate: this check runs before plugins are loaded, so it has no way
++ * to let a plugin register its own catalog-style page
++ * (e.g. a custom "Deals" page reading manufacturers_id/sort/keyword).
++ *
++ * Only checkout-flow pages are matched here. Core pages (checkout_shipping,
++ * checkout_payment, ...) and known third-party addons alike (checkout_one,
++ * checkout_one_confirmation, etc), all via the 'checkout_' prefix instead of an
++ * enumerated list.
++ *
++ * shopping_cart is deliberately NOT matched here because actionBuyNow() legitimately
++ * redirects to shopping_cart carrying the query string of whatever catalog listing
++ * the "Buy Now" button was clicked from. The actual protection against wasted
++ * breadcrumb/category queries lives downstream instead, in functions_lookups.php
++ * at zen_page_uses_catalog_breadcrumb_lookups().
++ *
++ * Deliberately narrow, by design:
++ *  - This is NOT an exhaustive deny-list of every non-catalog page in core,
++ *    let alone every plugin page. It only targets the checkout flow, the one place
++ *    confirmed safe from the redirect-leakage problem above (checkout is never the
++ *    target of a "Buy Now from a listing" redirect).
++ *  - The restricted param list below is NOT an exhaustive allow-list of every GET
++ *    key either, to avoid rejecting legitimate params this system doesn't control
++ *    (such as marketing/tracking params (utm_source, gclid, fbclid) or plugin-added keys).
++ *  - cPath and products_id are deliberately NOT in the restricted list below, even
++ *    though they're catalog-filter params too. Unlike the others, they're ALSO
++ *    legitimate on product-detail "_info" pages (product_info, etc), and that page
++ *    set varies by installed product type so it can't be safely enumerated here as
++ *    a static list (no DB connection exists yet at this point in the request).
++ *    cPath/products_id are instead gated downstream by
++ *    zen_page_uses_catalog_breadcrumb_lookups() in functions_lookups.php, which can
++ *    correctly enumerate that page set from TABLE_PRODUCT_TYPES.
++ *
++ * Keys deliberately left OUT, documented so a future edit doesn't "helpfully" add them:
++ *  - pID / pid: look like catalog candidates but are used legitimately on several pages.
++ *  - page: used broadly, not catalog-specific.
++ */
++
++/**
++ * @param array $get Typically $_GET.
++ * @return bool true if a catalog-only filter param was supplied for a page
++ *              confirmed to never legitimately read it.
++ *
++ * BACKPORTED FROM 2.3.0
++ * @since ZC v2.3.0 (backported)
++ */
++function zen_request_has_disallowed_catalog_param(array $get): bool
++{
++    // NOTE: cPath and products_id are intentionally excluded. See the docblock above.
++    static $catalogFilterKeys = [
++        'manufacturers_id',
++        'sort',
++        'disp_order', 'typefilter', 'filter_id', 'alpha_filter_id',
++        'keyword', 'dfrom', 'pfrom', 'dto', 'pto', 'search_in_description', 'inc_subcat',
++        'categories_id',
++        'sale_category',
++        'reviews_id',
++        'music_genre_id', 'record_company_id',
++    ];
++
++    // Mirrors init_sanitize.php's own fallback:
++    // an empty/missing main_page defaults to the index page (FILENAME_DEFAULT)
++    // e.g. index.php?manufacturers_id=8 is a legitimate URL shape that renders as the index/manufacturer listing
++    $page = $get['main_page'] ?? '';
++    if ($page === '') {
++        $page = 'index';
++    }
++
++    // Keep this pre-bootstrap helper safe if an array-shaped main_page reaches it.
++    if (!is_string($page) || strncmp($page, 'checkout_', 9) !== 0) {
++        return false;
++    }
++
++    foreach ($catalogFilterKeys as $key) {
++        if (isset($get[$key])) {
++            return true;
++        }
++    }
++
++    return false;
++}
