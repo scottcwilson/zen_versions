@@ -1,0 +1,9 @@
+The files in 2.2.2 are fixes applied to what's in
+  /Users/scott/zen_versions/zencart-2.2.2.
+Please create folders 2.0.0, 2.0.1, 2.1.0 and backport these fixes.  The folders will the base files for these three versions are 
+/Users/scott/zen_versions/zencart-2.0.0, /Users/scott/zen_versions/zencart-2.0.1, and /Users/scott/zen_versions/zencart-2.1.0
+
+Part II (not done yet).
+Backport https://github.com/zencart/zencart/pull/7918/changes to all 4 versions.
+
+- 
